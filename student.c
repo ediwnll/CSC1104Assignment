@@ -56,7 +56,7 @@ VERSION_CODENAME=buster
 #define CONFIRM 1
 
 // MONITORING
-#define STUDENTID "2101234" // the student ID is not needed in the group project of 2023
+// #define STUDENTID "2101234" // the student ID is not needed in the group project of 2023
 
 /* FUNCTION PROTOTYPES */
 void setupProgram();
@@ -330,6 +330,7 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness)
 /*
 Handshake algorithm to connect and send blink configurations
 */
+/*
 int connectToMonitorDevice(int blinkLed, int blinkFrequency, int blinkBrightness)
 {
     system("clear");
@@ -390,7 +391,7 @@ int connectToMonitorDevice(int blinkLed, int blinkFrequency, int blinkBrightness
     delay(5000);
     return 1;
 }
-
+*/
 /*
 Blinks the LED according to the user configuration
 */
