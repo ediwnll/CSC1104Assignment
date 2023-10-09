@@ -201,8 +201,8 @@ void blink()
         //     }
         //     else
         //     {
-        //         blinkLedWithConfig(blinkLed, frequency, brightness);
-        //         system("clear");
+        blinkLedWithConfig(blinkLed, frequency, brightness);
+        system("clear");
         //     }
     }
     else
