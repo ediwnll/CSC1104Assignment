@@ -1,7 +1,7 @@
 /*
 === HOW TO RUN ===
 Step 1: cd into C file location
-Step 2: gcc -o student student.c -lwiringPi
+Step 2: gcc -o newStudent newStudent.c -lwiringPi
 Step 3: ./student
 
 === PRE-REQUISITES ===
@@ -195,15 +195,15 @@ void blink()
     if (confirmBlinkSelection(blinkLed, frequency, brightness) == CONFIRM)
     {
 
-        if (connectToMonitorDevice(blinkLed, frequency, brightness) < 0)
-        {
-            printf("Connection failed, please make sure monitor device is ready.\n");
-        }
-        else
-        {
-            blinkLedWithConfig(blinkLed, frequency, brightness);
-            system("clear");
-        }
+        //     if (connectToMonitorDevice(blinkLed, frequency, brightness) < 0)
+        //     {
+        //         printf("Connection failed, please make sure monitor device is ready.\n");
+        //     }
+        //     else
+        //     {
+        //         blinkLedWithConfig(blinkLed, frequency, brightness);
+        //         system("clear");
+        //     }
     }
     else
         return;
@@ -265,7 +265,7 @@ int getBlinkFrequency()
 }
 
 /*
-Menu to get user selction on LED brightness
+Menu to get user selection on LED brightness
 */
 int getBlinkBrightness()
 {
@@ -292,7 +292,7 @@ int getBlinkBrightness()
 }
 
 /*
-Menu for user to acknowldge the blink configurations input
+Menu for user to acknowledge the blink configurations input
 */
 int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness)
 {
@@ -305,7 +305,7 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness)
         strcpy(blinkLedString, "Red");
     }
 
-    printf("Confirm your blink configrations.\n\n");
+    printf("Confirm your blink configurations.\n\n");
     printf("LED to blink: %s\n", blinkLedString);
     printf("Blink Frequency: %dHz\n", blinkFrequency);
     printf("Blink Brightness: %d%%\n\n", blinkBrightness);
