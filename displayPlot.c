@@ -12,6 +12,8 @@ and displays the data in graphs using GNUplot
 
 // DEFINITIONS
 #define LINE_LENGTH 1024 // Assume maximum line length of 1024
+#define MAX_ROWS 100     // Maximum number of rows
+#define MAX_COLUMNS 2    // Number of columns in CSV file
 
 // function prototypes
 
@@ -19,9 +21,10 @@ and displays the data in graphs using GNUplot
 int main()
 {
     // initialise variables
-    char data[LINE_LENGTH]; // size of 1024 characters for each line of data
-    int row = 0;            // index of rows
-    int column = 0;         // index of columns
+    char values[LINE_LENGTH];        // size of 1024 characters for each line of data
+    int data[MAX_ROWS][MAX_COLUMNS]; // array to store the csv data
+    int row = 0;                     // Current row in CSV
+    int col = 0;                     // Current column in CSV
 
     // open the csv file
     FILE *csvFile = fopen("data.csv", "r");
@@ -33,15 +36,42 @@ int main()
         return 1;
     }
 
-    while (fgets(data, sizeof(data), csvFile))
+    // read CSV file line by line
+    while (fgets(values, sizeof(values), csvFile))
     {
-        char *token = strtok(data, ",");
+        // split the data using comma as the delimiter
+        char *value = strtok(values, ",");
 
-        while (token != NULL)
+        // store each value into the array
+        while (value)
         {
-            printf("%s\n", token);
+            data[row][col] = atoi(value);
+            value = strtok(NULL, ",");
+            col++;
+        }
 
-            token = strtok(NULL, ",");
+        // move to next row
+        row++;
+
+        // Check if we have reached the maximum number of rows
+        if (row >= MAX_ROWS)
+        {
+            printf("Maximum number of rows reached (%d). Increase MAX_ROWS if needed.\n", MAX_ROWS);
+            break;
         }
     }
+
+    // close the CSV file
+    fclose(csvFile);
+
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < MAX_COLUMNS; j++)
+        {
+            printf("%d", data[i][j]);
+        }
+        printf("\n");
+    }
+
+    return 0;
 }
