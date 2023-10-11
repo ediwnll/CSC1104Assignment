@@ -11,9 +11,9 @@ and displays the data in graphs using GNUplot
 #include <string.h>
 
 // DEFINITIONS
-#define LINE_LENGTH 1024 // Assume maximum line length of 1024
-#define MAX_ROWS 100     // Maximum number of rows
-#define MAX_COLUMNS 2    // Number of columns in CSV file
+#define LINE_LENGTH 256 // Assume maximum line length of 1024
+#define MAX_ROWS 100    // Maximum number of rows
+#define MAX_COLUMNS 2   // Number of columns in CSV file
 
 // function prototypes
 
@@ -21,10 +21,10 @@ and displays the data in graphs using GNUplot
 int main()
 {
     // initialise variables
-    char values[LINE_LENGTH];        // size of 1024 characters for each line of data
-    int data[MAX_ROWS][MAX_COLUMNS]; // array to store the csv data
-    int row = 0;                     // Current row in CSV
-    int col = 0;                     // Current column in CSV
+    char values[LINE_LENGTH];                      // size of 1024 characters for each line of data
+    char data[MAX_ROWS][MAX_COLUMNS][LINE_LENGTH]; // array to store the csv data
+    int row = 0;                                   // Current row in CSV
+    int col = 0;                                   // Current column in CSV
 
     // open the csv file
     FILE *csvFile = fopen("data.csv", "r");
@@ -39,13 +39,15 @@ int main()
     // read CSV file line by line
     while (fgets(values, sizeof(values), csvFile))
     {
-        // split the data using comma as the delimiter
+        // set column index to 0, indicating first column
+        col = 0;
+        //  split the data using comma as the delimiter
         char *value = strtok(values, ",");
 
         // store each value into the array
-        while (value)
+        while (value != NULL && col <= MAX_COLUMNS)
         {
-            data[row][col] = atoi(value);
+            strcpy(data[row][col], value);
             value = strtok(NULL, ",");
             col++;
         }
@@ -68,7 +70,7 @@ int main()
     {
         for (int j = 0; j < MAX_COLUMNS; j++)
         {
-            printf("%d", data[i][j]);
+            printf("%s\t", data[i][j]);
         }
         printf("\n");
     }
