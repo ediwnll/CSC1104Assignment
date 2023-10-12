@@ -1,7 +1,7 @@
 /*
 === HOW TO RUN ===
 Step 1: cd into C file location
-Step 2: gcc -o student student.c -lwiringPi
+Step 2: gcc -o newStudent newStudent.c -lwiringPi
 Step 3: ./student
 
 === PRE-REQUISITES ===
@@ -39,6 +39,7 @@ VERSION_CODENAME=buster
 #include <string.h>
 #include <wiringSerial.h>
 #include <unistd.h>
+#include <time.h> /* to set up a timer for 60 seconds*/
 
 /* DEFINITIONS */
 #define RED 27   // GPIO Pin 27
@@ -72,6 +73,8 @@ int confirmBlinkSelection();
 int connectToMonitorDevice();
 void blinkLedWithConfig();
 void endProgram();
+void writeDataInCSV();
+int checkFileExist(const char *fileName);
 
 /* MAIN PROGRAM */
 int main(void)
@@ -194,16 +197,15 @@ void blink()
 
     if (confirmBlinkSelection(blinkLed, frequency, brightness) == CONFIRM)
     {
-
-        if (connectToMonitorDevice(blinkLed, frequency, brightness) < 0)
-        {
-            printf("Connection failed, please make sure monitor device is ready.\n");
-        }
-        else
-        {
-            blinkLedWithConfig(blinkLed, frequency, brightness);
-            system("clear");
-        }
+        //     if (connectToMonitorDevice(blinkLed, frequency, brightness) < 0)
+        //     {
+        //         printf("Connection failed, please make sure monitor device is ready.\n");
+        //     }
+        //     else
+        //     {
+        blinkLedWithConfig(blinkLed, frequency, brightness);
+        system("clear");
+        //     }
     }
     else
         return;
@@ -265,7 +267,7 @@ int getBlinkFrequency()
 }
 
 /*
-Menu to get user selction on LED brightness
+Menu to get user selection on LED brightness
 */
 int getBlinkBrightness()
 {
@@ -292,7 +294,7 @@ int getBlinkBrightness()
 }
 
 /*
-Menu for user to acknowldge the blink configurations input
+Menu for user to acknowledge the blink configurations input
 */
 int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness)
 {
@@ -305,7 +307,7 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness)
         strcpy(blinkLedString, "Red");
     }
 
-    printf("Confirm your blink configrations.\n\n");
+    printf("Confirm your blink configurations.\n\n");
     printf("LED to blink: %s\n", blinkLedString);
     printf("Blink Frequency: %dHz\n", blinkFrequency);
     printf("Blink Brightness: %d%%\n\n", blinkBrightness);
@@ -411,11 +413,15 @@ void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
     else
         blinkLed = RED;
 
+
+    
     // Blinking
     unsigned long previousMillis = 0;
     int ledState = LOW;
 
-    for (int blink = 0; blink < 20;)
+    writeDataInCSV(blinkLed,blinkFrequency,blinkBrightness);
+    /*Edit this part to change to 1 minute instead of blinking values */
+    /*for (int blink = 0; blink < 20;)
     {
         unsigned long currentMillis = millis();
 
@@ -435,7 +441,84 @@ void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
             blink++;
             digitalWrite(blinkLed, ledState);
         }
+    }*/
+}
+
+void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this is to create to write in CSV */
+    
+    int period = 1.0f / frequency * 1000;
+    int ledState = LOW;
+    int color;
+
+    char colorString[10] = "";
+
+    if (blinkLed == 13) { 
+        strcpy(colorString, "green");
+        color = GREEN;
+    }  else {
+        strcpy(colorString, "red");
+        color = RED;
     }
+        
+    strcat(colorString,".csv");
+
+    FILE *data = fopen(colorString,"rb+"); // create new file 
+    if( data == NULL){
+        fopen(colorString,"wb+"); 
+    } else fopen(colorString,"ab");
+
+    fprintf(data,"Time(in seconds),Frequency,Duty Cycle,State");
+
+    /* To add timer to do the iterations and adding of data*/
+    unsigned long currentMillis = millis();
+    unsigned long previousMillis = 0;
+    unsigned long minuteMillis = millis() + (1000*60);
+    do{
+        currentMillis = millis();
+
+        if (currentMillis - previousMillis >= period ){
+            previousMillis = currentMillis;
+
+            printf("nextMillis = %d\n", nextMillis);
+
+            if (ledState == LOW)
+            {
+                ledState = HIGH;
+                softPwmWrite(color, blinkBrightness);
+            }
+            else
+            {
+                ledState = LOW;
+                softPwmWrite(color, 0);
+            }
+
+            digitalWrite(color, ledState);
+
+            fprintf(data,"\n%d,%d,%d,%d",currentMillis, frequency,blinkBrightness, digitalRead(color));
+        }
+    }
+    while ( currentMillis < minuteMillis );
+
+    fclose(data);
+
+    /* if not null create a csv to merge them */
+    if (checkFileExist("red.csv") == 1 && checkFileExist("green.csv") == 1) {   
+        FILE *CSV = fopen("data.csv","wb"); 
+
+        fprintf(CSV,"Iterations(In Seconds),Frequency,Duty Cycle,Data");  //Creating Header for the file
+        fclose(CSV);
+    }
+}
+
+
+int checkFileExist(const char *fileName){
+    FILE *file;
+
+    if ( file = fopen(fileName,"rb")  ) { 
+        fclose(file);
+        return 1;
+    }
+    return 0;
 }
 
 /*
