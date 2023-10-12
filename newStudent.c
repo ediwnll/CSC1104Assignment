@@ -471,7 +471,7 @@ void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this i
 
     fprintf(data,"Time(in seconds),Frequency,Duty Cycle,State");
 
-    
+    /* To compare the timer and run it based on 60 seconds cycle*/
     unsigned long currentMillis = millis();
     unsigned long previousMillis = 0;
     unsigned long minuteMillis = millis() + (1000*60);
@@ -480,8 +480,6 @@ void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this i
 
         if (currentMillis - previousMillis >= period ){
             previousMillis = currentMillis;
-
-            printf("nextMillis = %d\n", previousMillis);
 
             if (ledState == LOW)
             {
