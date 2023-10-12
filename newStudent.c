@@ -465,11 +465,13 @@ void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this i
     FILE *data = fopen(colorString,"rb+"); // create new file 
     if( data == NULL){
         fopen(colorString,"wb+"); 
-    } else fopen(colorString,"ab");
+    } else {
+        fopen(colorString,"ab");
+    }
 
     fprintf(data,"Time(in seconds),Frequency,Duty Cycle,State");
 
-    /* To add timer to do the iterations and adding of data*/
+    
     unsigned long currentMillis = millis();
     unsigned long previousMillis = 0;
     unsigned long minuteMillis = millis() + (1000*60);
@@ -479,7 +481,7 @@ void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this i
         if (currentMillis - previousMillis >= period ){
             previousMillis = currentMillis;
 
-            printf("nextMillis = %d\n", nextMillis);
+            printf("nextMillis = %d\n", previousMillis);
 
             if (ledState == LOW)
             {
@@ -491,14 +493,13 @@ void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this i
                 ledState = LOW;
                 softPwmWrite(color, 0);
             }
-
             digitalWrite(color, ledState);
 
             fprintf(data,"\n%d,%d,%d,%d",currentMillis, frequency,blinkBrightness, digitalRead(color));
         }
     }
     while ( currentMillis < minuteMillis );
-
+    
     fclose(data);
 
     /* if not null create a csv to merge them */
