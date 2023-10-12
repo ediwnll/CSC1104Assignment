@@ -446,11 +446,9 @@ void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
 
 void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this is to create to write in CSV */
     
-    int period = 1.0f / frequency * 1000;
-    int ledState = LOW;
-    int color;
-
+    /* To generate name for the CSV file to be generated*/
     char colorString[10] = "";
+    int color;
 
     if (blinkLed == 13) { 
         strcpy(colorString, "green");
@@ -462,16 +460,19 @@ void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this i
         
     strcat(colorString,".csv");
 
-    FILE *data = fopen(colorString,"rb+"); // create new file 
+    FILE *data = fopen(colorString,"rb+");
     if( data == NULL){
         fopen(colorString,"wb+"); 
     } else {
         fopen(colorString,"ab");
     }
 
-    fprintf(data,"Time(in seconds),Frequency,Duty Cycle,State");
+    fprintf(data,"Time(in seconds),Frequency,Duty Cycle,State");// Header for the file
+    
+    /* To compare the timer and run it based on 60 seconds cycle blink frequency too*/
+    int period = 1.0f / frequency * 1000;
+    int ledState = LOW; 
 
-    /* To compare the timer and run it based on 60 seconds cycle*/
     unsigned long currentMillis = millis();
     unsigned long previousMillis = 0;
     unsigned long minuteMillis = millis() + (1000*60);
@@ -500,7 +501,7 @@ void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this i
     
     fclose(data);
 
-    /* if not null create a csv to merge them */
+    /* if not null create a csv to merge two differnet files together into one (In Progress) */
     if (checkFileExist("red.csv") == 1 && checkFileExist("green.csv") == 1) {   
         FILE *CSV = fopen("data.csv","wb"); 
 
@@ -509,7 +510,7 @@ void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this i
     }
 }
 
-
+/* Check whether the files exists so to create a new file to merge files*/
 int checkFileExist(const char *fileName){
     FILE *file;
 
