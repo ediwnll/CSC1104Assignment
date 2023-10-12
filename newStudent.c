@@ -419,6 +419,7 @@ void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
     unsigned long previousMillis = 0;
     int ledState = LOW;
 
+    /*Creates new CSV file using this line of code*/
     writeDataInCSV(blinkLed,blinkFrequency,blinkBrightness);
     /*Edit this part to change to 1 minute instead of blinking values */
     /*for (int blink = 0; blink < 20;)
@@ -462,24 +463,25 @@ void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this i
         
     strcat(colorString,".csv");
 
-    FILE *data = fopen(colorString,"rb+"); // create new file 
-    if( data == NULL){
-        fopen(colorString,"wb+"); 
-    } else fopen(colorString,"ab");
+    FILE *data = NULL;
 
-    fprintf(data,"Time(in seconds),Frequency,Duty Cycle,State");
+    if(checkFileExist(colorString) == 0){
+        data = fopen(colorString,"wb+"); // create new file into a new workbook if doesnt exists
+    } else {
+        data = fopen(colorString,"ab"); // appending new data into the same workbook if exists
+    }
 
-    /* To add timer to do the iterations and adding of data*/
+    fprintf(data,"Time(in seconds),Frequency,Duty Cycle,State"); //header
+    
     unsigned long currentMillis = millis();
     unsigned long previousMillis = 0;
     unsigned long minuteMillis = millis() + (1000*60);
+
     do{
         currentMillis = millis();
 
         if (currentMillis - previousMillis >= period ){
             previousMillis = currentMillis;
-
-            printf("nextMillis = %d\n", nextMillis);
 
             if (ledState == LOW)
             {
@@ -491,14 +493,13 @@ void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this i
                 ledState = LOW;
                 softPwmWrite(color, 0);
             }
-
             digitalWrite(color, ledState);
 
             fprintf(data,"\n%d,%d,%d,%d",currentMillis, frequency,blinkBrightness, digitalRead(color));
         }
     }
     while ( currentMillis < minuteMillis );
-
+    
     fclose(data);
 
     /* if not null create a csv to merge them */
