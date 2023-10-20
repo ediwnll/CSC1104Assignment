@@ -72,9 +72,16 @@ int getBlinkBrightness();
 int confirmBlinkSelection();
 int connectToMonitorDevice();
 void blinkLedWithConfig();
-void endProgram();
 void writeDataInCSV();
+int createArrayInData();
 int checkFileExist(const char *fileName);
+void endProgram();
+
+/* This creates a structure to store in value with frequency and state*/
+struct CSV{
+    int frequency;
+    int state;
+};
 
 /* MAIN PROGRAM */
 int main(void)
@@ -230,11 +237,12 @@ int getBlinkLed()
     {
         system("clear");
         printf("Invalid Input. Try Again...\n\n");
-        getBlinkLed();
+        getBlinkLed(0);
     }
     else
     {
         system("clear");
+        printf("Your selection is : %d", selection);
         return selection;
     }
 }
@@ -403,24 +411,24 @@ void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
     printf("\nBlinking...\n");
 
     // Setting Frequency
-    float onOffTime = 1.0f / blinkFrequency * 1000;
+ //   float onOffTime = 1.0f / blinkFrequency * 1000;
 
     // Setting Blink LED
-    if (blinkLed == BLINK_GREEN)
+   /* if (blinkLed == BLINK_GREEN)
     {
         blinkLed = GREEN;
     }
     else
-        blinkLed = RED;
-
+        blinkLed = RED;*/
 
     
-    // Blinking
-    unsigned long previousMillis = 0;
-    int ledState = LOW;
+    /*Creates new Array for blinking LED*/
+    createArrayInData(blinkLed,blinkFrequency,blinkBrightness);
 
-    /*Creates new CSV file using this line of code*/
-    writeDataInCSV(blinkLed,blinkFrequency,blinkBrightness);
+    // Blinking
+   /* unsigned long previousMillis = 0;
+    int ledState = LOW;*/
+
     /*Edit this part to change to 1 minute instead of blinking values */
     /*for (int blink = 0; blink < 20;)
     {
@@ -445,70 +453,89 @@ void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
     }*/
 }
 
-void writeDataInCSV(int blinkLed, int frequency,int blinkBrightness){  /* this is to create to write in CSV */
-    
-    int period = 1.0f / frequency * 1000;
+
+int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
+
+    int period = 1.0f / blinkFrequency * 1000000;
     int ledState = LOW;
-    int color;
+    int color = blinkLed == BLINK_GREEN ? GREEN : RED;
+    struct CSV* data;
+    data = malloc(150000 * sizeof(struct CSV));
 
-    char colorString[10] = "";
-
-    if (blinkLed == 13) { 
-        strcpy(colorString, "green");
-        color = GREEN;
-    }  else {
-        strcpy(colorString, "red");
-        color = RED;
-    }
-        
-    strcat(colorString,".csv");
-
-    FILE *data = NULL;
-
-    if(checkFileExist(colorString) == 0){
-        data = fopen(colorString,"wb+"); // create new file into a new workbook if doesnt exists
-    } else {
-        data = fopen(colorString,"ab"); // appending new data into the same workbook if exists
+    if (data == NULL){
+        fprintf(stderr, "Memory allocation failed");
+        return 1;
     }
 
-    fprintf(data,"Time(in seconds),Frequency,Duty Cycle,State"); //header
-    
-    unsigned long currentMillis = millis();
-    unsigned long previousMillis = 0;
-    unsigned long minuteMillis = millis() + (1000*60);
+    unsigned long currentMicros = micros();
+    unsigned long previousMicros = 0;
+    unsigned testData = currentMicros + (5000000);
+    unsigned long minuteMicros = currentMicros + (60000000);
+    unsigned long nextRecord = currentMicros;
+    int iterations = 0;
 
-    do{
-        currentMillis = millis();
+    do  {   
+        currentMicros = micros();
 
-        if (currentMillis - previousMillis >= period ){
-            previousMillis = currentMillis;
-
-            if (ledState == LOW)
-            {
-                ledState = HIGH;
-                softPwmWrite(color, blinkBrightness);
-            }
-            else
-            {
-                ledState = LOW;
-                softPwmWrite(color, 0);
-            }
+        if (currentMicros - previousMicros >= period ){
+            previousMicros = currentMicros;
+            ledState = ledState == LOW ?  HIGH : LOW;
+            int brightness = ledState == LOW ? blinkBrightness : 0;
+            
+            softPwmWrite(color, brightness);
             digitalWrite(color, ledState);
+        }
 
-            fprintf(data,"\n%d,%d,%d,%d",currentMillis, frequency,blinkBrightness, digitalRead(color));
+        /* This makes the record stores in every 400microseconds */
+        if (currentMicros >= nextRecord ){
+            
+            data[iterations].frequency = blinkFrequency;
+            data[iterations].state = digitalRead(color); 
+            iterations ++;
+            nextRecord = currentMicros + (400);
         }
     }
-    while ( currentMillis < minuteMillis );
+    while ( currentMicros < testData );
+
+    //ensures that the current color will be off after looping
+    softPwmWrite(color,0);
+    writeDataInCSV(data,iterations,blinkLed);
+    free(data);
+}
+
+ void writeDataInCSV(struct CSV *data,int sizeArr,int blinkLed){  /* this is to create to write in CSV*/
+    static struct CSV redDataSet[150000];
+    static struct CSV greenDataSet[150000];
+
+    if (blinkLed == BLINK_GREEN){
+         for (int i = 0; i < sizeArr; i ++){
+            greenDataSet[i] = data[i];
+        }
+    }
+    else{
+        for (int i = 0; i < sizeArr; i ++){
+            redDataSet[i] = data[i];
+        }
+    }
+
+    if (greenDataSet[0].frequency == 0  || redDataSet[0].frequency == 0 ){
+        blink();
+    }
     
-    fclose(data);
-
     /* if not null create a csv to merge them */
-    if (checkFileExist("red.csv") == 1 && checkFileExist("green.csv") == 1) {   
-        FILE *CSV = fopen("data.csv","wb"); 
+    if (checkFileExist("displayPlot.csv") == 0) {   
+        FILE *CSV = fopen("displayPlot.csv","wb"); 
+        fprintf(CSV,"Green Frequency,Green Duty Cycle, Red Frequency, Red Duty Cycle");  //Creating Header for the file
+        
+        /* Loop through array for this part to store inside CSV*/
+        for (int i = 0; i < sizeArr; i++){
+            fprintf(CSV,"\n%d,%d,%d,%d",greenDataSet[i].frequency,greenDataSet[i].state,redDataSet[i].frequency,redDataSet[i].state);
+        }
 
-        fprintf(CSV,"Iterations(In Seconds),Frequency,Duty Cycle,Data");  //Creating Header for the file
+        printf("New CSV displayPlot.csv has been created");
         fclose(CSV);
     }
+
 }
 
 
@@ -521,6 +548,9 @@ int checkFileExist(const char *fileName){
     }
     return 0;
 }
+
+
+
 
 /*
 Resetting and cleaning up before safely exiting the program.
