@@ -77,7 +77,7 @@ int createArrayInData();
 int checkFileExist(const char *fileName);
 void endProgram();
 
-/* This creates a structure to store in value with frequency and state*/
+/* This creates a structure(object) to store in value with frequency and state*/
 struct CSV{
     int frequency;
     int state;
@@ -453,12 +453,15 @@ void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
     }*/
 }
 
-
+/*
+This helps to create an function for the user to store data into the csv 
+*/
 int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
-
+    /* Formulas and state to be set into the data*/
     int period = 1.0f / blinkFrequency * 1000000;
     int ledState = LOW;
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
+    /*Intialized object and allocate the size accordingly*/
     struct CSV* data;
     data = malloc(150000 * sizeof(struct CSV));
 
@@ -466,7 +469,7 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
         fprintf(stderr, "Memory allocation failed");
         return 1;
     }
-
+    /* Intializes the Microsecond counter to process data accordingly*/
     unsigned long currentMicros = micros();
     unsigned long previousMicros = 0;
     unsigned testData = currentMicros + (5000000);
@@ -476,7 +479,7 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
 
     do  {   
         currentMicros = micros();
-
+        /* If the current microsecond minus previous microsecond more than equal to period then trigger*/
         if (currentMicros - previousMicros >= period ){
             previousMicros = currentMicros;
             ledState = ledState == LOW ?  HIGH : LOW;
@@ -486,7 +489,7 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
             digitalWrite(color, ledState);
         }
 
-        /* This makes the record stores in every 400microseconds */
+        /* This makes the record stores in every 400microseconds (might need to look further into it)*/
         if (currentMicros >= nextRecord ){
             
             data[iterations].frequency = blinkFrequency;
@@ -497,16 +500,20 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
     }
     while ( currentMicros < testData );
 
-    //ensures that the current color will be off after looping
+    /*ensures that the current color will be off after looping and write data into csv and make sure the memory allocation is freed after use*/
     softPwmWrite(color,0);
     writeDataInCSV(data,iterations,blinkLed);
     free(data);
 }
-
- void writeDataInCSV(struct CSV *data,int sizeArr,int blinkLed){  /* this is to create to write in CSV*/
+/*
+This function creates the CSV file and writes into it.
+*/
+ void writeDataInCSV(struct CSV *data,int sizeArr,int blinkLed){  
+    /* Init array*/
     static struct CSV redDataSet[150000];
     static struct CSV greenDataSet[150000];
 
+    /* Looping through to store the data into array*/
     if (blinkLed == BLINK_GREEN){
          for (int i = 0; i < sizeArr; i ++){
             greenDataSet[i] = data[i];
@@ -517,12 +524,12 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
             redDataSet[i] = data[i];
         }
     }
-
+    /* This will trigger the user to key in the value accordingly*/
     if (greenDataSet[0].frequency == 0  || redDataSet[0].frequency == 0 ){
         blink();
     }
     
-    /* if not null create a csv to merge them */
+    /*Creates a csv if the csv doesnt exists*/
     if (checkFileExist("displayPlot.csv") == 0) {   
         FILE *CSV = fopen("displayPlot.csv","wb"); 
         fprintf(CSV,"Green Frequency,Green Duty Cycle, Red Frequency, Red Duty Cycle");  //Creating Header for the file
@@ -535,10 +542,11 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
         printf("New CSV displayPlot.csv has been created");
         fclose(CSV);
     }
-
 }
 
-
+/*
+This helps to check whether the file exists
+*/
 int checkFileExist(const char *fileName){
     FILE *file;
 
@@ -548,9 +556,6 @@ int checkFileExist(const char *fileName){
     }
     return 0;
 }
-
-
-
 
 /*
 Resetting and cleaning up before safely exiting the program.
