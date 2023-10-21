@@ -159,7 +159,15 @@ int getUserSelection()
 
     scanf("%d", &selection);
 
-    return selection;
+    if (selection < 0 || selection > 3 ){
+        system("clear");
+        printf("Invalid Input. Try Again...\n\n");
+        getUserSelection();
+    }
+    else {
+        system("clear");
+        return selection;
+    }
 }
 
 /*
@@ -237,12 +245,11 @@ int getBlinkLed()
     {
         system("clear");
         printf("Invalid Input. Try Again...\n\n");
-        getBlinkLed(0);
+        getBlinkLed();
     }
     else
     {
         system("clear");
-        printf("Your selection is : %d", selection);
         return selection;
     }
 }
@@ -463,7 +470,7 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
     /*Intialized object and allocate the size accordingly*/
     struct CSV* data;
-    data = malloc(150000 * sizeof(struct CSV));
+    data = malloc(4 * 150000 * sizeof(struct CSV));
 
     if (data == NULL){
         fprintf(stderr, "Memory allocation failed");
@@ -472,7 +479,7 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
     /* Intializes the Microsecond counter to process data accordingly*/
     unsigned long currentMicros = micros();
     unsigned long previousMicros = 0;
-    unsigned testData = currentMicros + (5000000);
+    unsigned testData = currentMicros + (5000000); /* can configure this for test data but will remove before submission*/
     unsigned long minuteMicros = currentMicros + (60000000);
     unsigned long nextRecord = currentMicros;
     int iterations = 0;
@@ -489,13 +496,13 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
             digitalWrite(color, ledState);
         }
 
-        /* This makes the record stores in every 400microseconds (might need to look further into it)*/
+        /* This makes the record stores in every 100microseconds (looks right but will discuss with the rest at wednesday)*/
         if (currentMicros >= nextRecord ){
             
             data[iterations].frequency = blinkFrequency;
             data[iterations].state = digitalRead(color); 
             iterations ++;
-            nextRecord = currentMicros + (400);
+            nextRecord = currentMicros + (100);
         }
     }
     while ( currentMicros < testData );
