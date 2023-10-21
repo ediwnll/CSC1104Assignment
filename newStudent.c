@@ -160,6 +160,8 @@ int getUserSelection()
     scanf("%d", &selection);
 
     if (selection < 0 || selection > 3 ){
+        system("clear");
+        printf("Invalid Input. Try Again...\n\n");
         getUserSelection();
     }
     else {
