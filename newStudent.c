@@ -463,7 +463,7 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
     /*Intialized object and allocate the size accordingly*/
     struct CSV* data;
-    data = malloc(150000 * sizeof(struct CSV));
+    data = malloc(4 * 150000 * sizeof(struct CSV));
 
     if (data == NULL){
         fprintf(stderr, "Memory allocation failed");
@@ -489,13 +489,13 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
             digitalWrite(color, ledState);
         }
 
-        /* This makes the record stores in every 400microseconds (might need to look further into it)*/
+        /* This makes the record stores in every 100microseconds (test it out)*/
         if (currentMicros >= nextRecord ){
             
             data[iterations].frequency = blinkFrequency;
             data[iterations].state = digitalRead(color); 
             iterations ++;
-            nextRecord = currentMicros + (400);
+            nextRecord = currentMicros + (100);
         }
     }
     while ( currentMicros < testData );
