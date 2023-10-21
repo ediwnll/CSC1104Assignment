@@ -159,7 +159,13 @@ int getUserSelection()
 
     scanf("%d", &selection);
 
-    return selection;
+    if (selection < 0 || selection > 3 ){
+        getUserSelection();
+    }
+    else {
+        system("clear");
+        return selection;
+    }
 }
 
 /*
@@ -237,7 +243,7 @@ int getBlinkLed()
     {
         system("clear");
         printf("Invalid Input. Try Again...\n\n");
-        getBlinkLed(0);
+        getBlinkLed();
     }
     else
     {
