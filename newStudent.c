@@ -250,7 +250,6 @@ int getBlinkLed()
     else
     {
         system("clear");
-        printf("Your selection is : %d", selection);
         return selection;
     }
 }
@@ -471,7 +470,7 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
     /*Intialized object and allocate the size accordingly*/
     struct CSV* data;
-    data = malloc(4 * 150000 * sizeof(struct CSV));
+    data = malloc(600000 * sizeof(struct CSV));
 
     if (data == NULL){
         fprintf(stderr, "Memory allocation failed");
@@ -518,8 +517,8 @@ This function creates the CSV file and writes into it.
 */
  void writeDataInCSV(struct CSV *data,int sizeArr,int blinkLed){  
     /* Init array*/
-    static struct CSV redDataSet[150000];
-    static struct CSV greenDataSet[150000];
+    static struct CSV redDataSet[600000];
+    static struct CSV greenDataSet[600000];
 
     /* Looping through to store the data into array*/
     if (blinkLed == BLINK_GREEN){
