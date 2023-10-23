@@ -69,17 +69,19 @@ void blink();
 int getBlinkLed();
 int getBlinkFrequency();
 int getBlinkBrightness();
-int confirmBlinkSelection();
+int confirmBlinkSelection(int,int,int,float);
+float getBlinkDutyCycle();
 int connectToMonitorDevice();
 void blinkLedWithConfig();
-void writeDataInCSV();
-int createArrayInData();
+void writeDataIntoCSV();
+void createArrayInData(int,int,int,float);
 int checkFileExist(const char *fileName);
 void endProgram();
 
 /* This creates a structure(object) to store in value with frequency and state*/
 struct CSV{
     int frequency;
+    float dutyCycle;
     int state;
 };
 
@@ -209,8 +211,9 @@ void blink()
     int blinkLed = getBlinkLed();
     int frequency = getBlinkFrequency();
     int brightness = getBlinkBrightness();
+    float dutyCycle = getBlinkDutyCycle();
 
-    if (confirmBlinkSelection(blinkLed, frequency, brightness) == CONFIRM)
+    if (confirmBlinkSelection(blinkLed, frequency, brightness,dutyCycle) == CONFIRM)
     {
         //     if (connectToMonitorDevice(blinkLed, frequency, brightness) < 0)
         //     {
@@ -218,7 +221,8 @@ void blink()
         //     }
         //     else
         //     {
-        blinkLedWithConfig(blinkLed, frequency, brightness);
+        createArrayInData(blinkLed,frequency,brightness,dutyCycle);
+        //blinkLedWithConfig(blinkLed, frequency, brightness);
         system("clear");
         //     }
     }
@@ -253,6 +257,7 @@ int getBlinkLed()
         return selection;
     }
 }
+
 
 /*
 Menu to get user selction on Frequency to blink
@@ -308,10 +313,36 @@ int getBlinkBrightness()
     }
 }
 
+
+float getBlinkDutyCycle(){
+
+    float selection;
+
+    printf("Select LED brightness during blink.\n\n");
+    printf("Enter any numbers between 0 to 100\n");
+    printf("Duty Cycle (%%): ");
+
+    scanf("%f", &selection);
+
+    if (selection < 0 || selection > 100)
+    {
+        system("clear");
+        printf("Invalid Input. Try Again...\n\n");
+        getBlinkDutyCycle();
+    }
+    else
+    {
+        system("clear");
+        return selection;
+    }
+
+}
+
+
 /*
 Menu for user to acknowledge the blink configurations input
 */
-int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness)
+int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness,float dutyCycle)
 {
 
     int selection;
@@ -325,7 +356,8 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness)
     printf("Confirm your blink configurations.\n\n");
     printf("LED to blink: %s\n", blinkLedString);
     printf("Blink Frequency: %dHz\n", blinkFrequency);
-    printf("Blink Brightness: %d%%\n\n", blinkBrightness);
+    printf("Blink Brightness: %d%%\n", blinkBrightness);
+    printf("Blink Brightness: %.2f%%\n\n", dutyCycle);
     printf("[1] Confirm Configuration\n");
     printf("[0] Return to Home\n");
     printf("\nYour Selection: ");
@@ -336,7 +368,7 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness)
     {
         system("clear");
         printf("Invalid Input. Try Again...\n\n");
-        confirmBlinkSelection(blinkLed, blinkFrequency, blinkBrightness);
+        confirmBlinkSelection(blinkLed, blinkFrequency, blinkBrightness,dutyCycle);
     }
     else
     {
@@ -412,7 +444,7 @@ int connectToMonitorDevice(int blinkLed, int blinkFrequency, int blinkBrightness
 /*
 Blinks the LED according to the user configuration
 */
-void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
+/*void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
 {
 
     printf("\nBlinking...\n");
@@ -430,7 +462,7 @@ void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
 
     
     /*Creates new Array for blinking LED*/
-    createArrayInData(blinkLed,blinkFrequency,blinkBrightness);
+    
 
     // Blinking
    /* unsigned long previousMillis = 0;
@@ -457,15 +489,16 @@ void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
             blink++;
             digitalWrite(blinkLed, ledState);
         }
-    }*/
-}
+    }
+}*/
 
 /*
 This helps to create an function for the user to store data into the csv 
 */
-int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
+void createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness,float dutyCycle){
+    printf("\nBlinking...\n");
     /* Formulas and state to be set into the data*/
-    int period = 1.0f / blinkFrequency * 1000000;
+    int period = (1.0f / blinkFrequency * 1000000) * (dutyCycle/100);
     int ledState = LOW;
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
     /*Intialized object and allocate the size accordingly*/
@@ -474,7 +507,7 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
 
     if (data == NULL){
         fprintf(stderr, "Memory allocation failed");
-        return 1;
+        return;
     }
     /* Intializes the Microsecond counter to process data accordingly*/
     unsigned long currentMicros = micros();
@@ -500,6 +533,7 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
         if (currentMicros >= nextRecord ){
             
             data[iterations].frequency = blinkFrequency;
+            data[iterations].dutyCycle = dutyCycle;
             data[iterations].state = digitalRead(color); 
             iterations ++;
             nextRecord = currentMicros + (100);
@@ -509,44 +543,47 @@ int createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness){
 
     /*ensures that the current color will be off after looping and write data into csv and make sure the memory allocation is freed after use*/
     softPwmWrite(color,0);
-    writeDataInCSV(data,iterations,blinkLed);
+    writeDataIntoCSV(data,iterations,blinkLed);
     free(data);
 }
 /*
 This function creates the CSV file and writes into it.
 */
- void writeDataInCSV(struct CSV *data,int sizeArr,int blinkLed){  
+ void writeDataIntoCSV(struct CSV *data,int sizeArr,int blinkLed){  
     /* Init array*/
-    static struct CSV redDataSet[600000];
-    static struct CSV greenDataSet[600000];
+    static struct CSV redLedArray[600000];
+    static struct CSV greenLedArray[600000];
 
     /* Looping through to store the data into array*/
     if (blinkLed == BLINK_GREEN){
          for (int i = 0; i < sizeArr; i ++){
-            greenDataSet[i] = data[i];
+            greenLedArray[i] = data[i];
         }
     }
     else{
         for (int i = 0; i < sizeArr; i ++){
-            redDataSet[i] = data[i];
+            redLedArray[i] = data[i];
         }
     }
     /* This will trigger the user to key in the value accordingly*/
-    if (greenDataSet[0].frequency == 0  || redDataSet[0].frequency == 0 ){
+    if (greenLedArray[0].frequency == 0  || redLedArray[0].frequency == 0 ){
         blink();
     }
     
     /*Creates a csv if the csv doesnt exists*/
     if (checkFileExist("displayPlot.csv") == 0) {   
         FILE *CSV = fopen("displayPlot.csv","wb"); 
-        fprintf(CSV,"Green Frequency,Green Duty Cycle, Red Frequency, Red Duty Cycle");  //Creating Header for the file
+        fprintf(CSV,"Green Frequency,Green Duty Cycle,Green State,Red Frequency, Red Duty Cycle,Red State");  //Creating Header for the file
         
         /* Loop through array for this part to store inside CSV*/
         for (int i = 0; i < sizeArr; i++){
-            fprintf(CSV,"\n%d,%d,%d,%d",greenDataSet[i].frequency,greenDataSet[i].state,redDataSet[i].frequency,redDataSet[i].state);
+            fprintf(CSV,
+                "\n%d,%.2lf,%d,%d,%.2lf,%d",
+                greenLedArray[i].frequency,greenLedArray[i].dutyCycle,greenLedArray[i].state,
+                redLedArray[i].frequency,redLedArray[i].dutyCycle,redLedArray[i].state);
         }
 
-        printf("New CSV displayPlot.csv has been created");
+        printf("CSV displayPlot has been created");
         fclose(CSV);
     }
 }
