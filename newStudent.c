@@ -56,6 +56,9 @@ VERSION_CODENAME=buster
 #define BLINK_RED 2
 #define CONFIRM 1
 
+//Defining Microsecond
+#define TO_MICROSECONDS 1000000
+
 // MONITORING
 // #define STUDENTID "2101234" // the student ID is not needed in the group project of 2023
 
@@ -71,10 +74,8 @@ int getBlinkFrequency();
 int getBlinkBrightness();
 int confirmBlinkSelection(int,int,int,float);
 float getBlinkDutyCycle();
-int connectToMonitorDevice();
-void blinkLedWithConfig();
 void writeDataIntoCSV();
-void createArrayInData(int,int,int,float);
+void recordWaveDataIntoMemory(int,int,int,float);
 int checkFileExist(const char *fileName);
 void endProgram();
 
@@ -215,16 +216,8 @@ void blink()
 
     if (confirmBlinkSelection(blinkLed, frequency, brightness,dutyCycle) == CONFIRM)
     {
-        //     if (connectToMonitorDevice(blinkLed, frequency, brightness) < 0)
-        //     {
-        //         printf("Connection failed, please make sure monitor device is ready.\n");
-        //     }
-        //     else
-        //     {
-        createArrayInData(blinkLed,frequency,brightness,dutyCycle);
-        //blinkLedWithConfig(blinkLed, frequency, brightness);
+        recordWaveDataIntoMemory(blinkLed,frequency,brightness,dutyCycle);
         system("clear");
-        //     }
     }
     else
         return;
@@ -257,7 +250,6 @@ int getBlinkLed()
         return selection;
     }
 }
-
 
 /*
 Menu to get user selction on Frequency to blink
@@ -313,7 +305,6 @@ int getBlinkBrightness()
     }
 }
 
-
 float getBlinkDutyCycle(){
 
     float selection;
@@ -330,14 +321,11 @@ float getBlinkDutyCycle(){
         printf("Invalid Input. Try Again...\n\n");
         getBlinkDutyCycle();
     }
-    else
-    {
-        system("clear");
-        return selection;
-    }
+
+    system("clear");
+    return selection;
 
 }
-
 
 /*
 Menu for user to acknowledge the blink configurations input
@@ -357,7 +345,7 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness,
     printf("LED to blink: %s\n", blinkLedString);
     printf("Blink Frequency: %dHz\n", blinkFrequency);
     printf("Blink Brightness: %d%%\n", blinkBrightness);
-    printf("Blink Brightness: %.2f%%\n\n", dutyCycle);
+    printf("Duty Cycle: %.2f%%\n\n", dutyCycle);
     printf("[1] Confirm Configuration\n");
     printf("[0] Return to Home\n");
     printf("\nYour Selection: ");
@@ -370,138 +358,19 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness,
         printf("Invalid Input. Try Again...\n\n");
         confirmBlinkSelection(blinkLed, blinkFrequency, blinkBrightness,dutyCycle);
     }
-    else
-    {
-        return selection;
-    }
+
+    return selection;
 }
-
-/*
-Handshake algorithm to connect and send blink configurations
-*/
-/*
-int connectToMonitorDevice(int blinkLed, int blinkFrequency, int blinkBrightness)
-{
-    system("clear");
-    printf("Connecting to Monitor Device...\n");
-
-    int serial_port;
-    char studentid[] = STUDENTID;
-
-    char blinkLedString[1];
-    char blinkFrequencyString[2];
-    char blinkBrightnessString[3];
-
-    sprintf(blinkLedString, "%d", blinkLed);
-    sprintf(blinkFrequencyString, "%d", blinkFrequency);
-    sprintf(blinkBrightnessString, "%d", blinkBrightness);
-
-    // Open the serial port
-    serial_port = serialOpen("/dev/ttyAMA0", 9600);
-    if (serial_port < 0)
-    {
-        fprintf(stderr, "Error opening serial port\n");
-        return -1;
-    }
-
-    // Write data to the serial port
-    serialPuts(serial_port, studentid);
-
-    // Read data from the serial port
-    char buffer[256];
-    int n = read(serial_port, buffer, sizeof(buffer));
-    buffer[n] = '\0';
-
-    if (strlen(buffer) == 7)
-    {
-        printf("Acknowledge Student ID: %s\n", buffer);
-    }
-    else
-        return -1;
-
-    // Send Blink Configuration
-    serialPuts(serial_port, blinkLedString);
-    n = read(serial_port, buffer, sizeof(buffer));
-    buffer[n] = '\0';
-    printf("%s\n", buffer);
-
-    serialPuts(serial_port, blinkFrequencyString);
-    n = read(serial_port, buffer, sizeof(buffer));
-    buffer[n] = '\0';
-    printf("%s\n", buffer);
-
-    serialPuts(serial_port, blinkBrightnessString);
-    n = read(serial_port, buffer, sizeof(buffer));
-    buffer[n] = '\0';
-    printf("%s\n", buffer);
-
-    serialClose(serial_port);
-    printf("Connection Successful!\n");
-    delay(5000);
-    return 1;
-}
-*/
-/*
-Blinks the LED according to the user configuration
-*/
-/*void blinkLedWithConfig(int blinkLed, int blinkFrequency, int blinkBrightness)
-{
-
-    printf("\nBlinking...\n");
-
-    // Setting Frequency
- //   float onOffTime = 1.0f / blinkFrequency * 1000;
-
-    // Setting Blink LED
-   /* if (blinkLed == BLINK_GREEN)
-    {
-        blinkLed = GREEN;
-    }
-    else
-        blinkLed = RED;*/
-
-    
-    /*Creates new Array for blinking LED*/
-    
-
-    // Blinking
-   /* unsigned long previousMillis = 0;
-    int ledState = LOW;*/
-
-    /*Edit this part to change to 1 minute instead of blinking values */
-    /*for (int blink = 0; blink < 20;)
-    {
-        unsigned long currentMillis = millis();
-
-        if (currentMillis - previousMillis >= onOffTime)
-        {
-            previousMillis = currentMillis;
-            if (ledState == LOW)
-            {
-                ledState = HIGH;
-                softPwmWrite(blinkLed, blinkBrightness);
-            }
-            else
-            {
-                ledState = LOW;
-                softPwmWrite(blinkLed, 0);
-            }
-            blink++;
-            digitalWrite(blinkLed, ledState);
-        }
-    }
-}*/
 
 /*
 This helps to create an function for the user to store data into the csv 
 */
-void createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness,float dutyCycle){
+void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightness,float dutyCycle){
     printf("\nBlinking...\n");
-    /* Formulas and state to be set into the data*/
-    int period = (1.0f / blinkFrequency * 1000000) * (dutyCycle/100);
+    /* Formulas and initializer*/
+    int period = (1.0f / blinkFrequency * TO_MICROSECONDS) * (dutyCycle / 100);
     int ledState = LOW;
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
-    /*Intialized object and allocate the size accordingly*/
     struct CSV* data;
     data = malloc(600000 * sizeof(struct CSV));
 
@@ -512,8 +381,8 @@ void createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness,float
     /* Intializes the Microsecond counter to process data accordingly*/
     unsigned long currentMicros = micros();
     unsigned long previousMicros = 0;
-    unsigned testData = currentMicros + (5000000);
-    unsigned long minuteMicros = currentMicros + (60000000);
+    unsigned testData = currentMicros + (5 * TO_MICROSECONDS);
+    unsigned long minuteMicros = currentMicros + (60 * TO_MICROSECONDS);
     unsigned long nextRecord = currentMicros;
     int iterations = 0;
 
@@ -546,6 +415,7 @@ void createArrayInData(int blinkLed,int blinkFrequency,int blinkBrightness,float
     writeDataIntoCSV(data,iterations,blinkLed);
     free(data);
 }
+
 /*
 This function creates the CSV file and writes into it.
 */
