@@ -39,7 +39,6 @@ VERSION_CODENAME=buster
 #include <string.h>
 #include <wiringSerial.h>
 #include <unistd.h>
-#include <time.h> /* to set up a timer for 60 seconds*/
 
 /* DEFINITIONS */
 #define RED 27   // GPIO Pin 27
@@ -81,6 +80,7 @@ void endProgram();
 
 /* This creates a structure(object) to store in value with frequency and state*/
 struct CSV{
+    float timeIterations;
     int frequency;
     float dutyCycle;
     int state;
@@ -372,7 +372,7 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
     int ledState = LOW;
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
     struct CSV* data;
-    data = malloc(1000 * sizeof(struct CSV));
+    data = malloc(3000 * sizeof(struct CSV));
 
     if (data == NULL){
         fprintf(stderr, "Memory allocation failed");
@@ -380,10 +380,9 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
     }
     /* Change data to millis*/
 
-    /* Intializes the Microsecond counter to process data accordingly*/
+    /* Intializes the Millisecond counter to process data accordingly*/
     unsigned long currentMillis = millis();
     unsigned long previousMillis = 0;
-    unsigned testData = currentMillis + (5 * TO_MILLIS);
     unsigned long minuteMillis = currentMillis + (60 * TO_MILLIS);
     unsigned long nextRecord = currentMillis;
     int iterations = 0;
@@ -400,17 +399,22 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
             digitalWrite(color, ledState);
         }
 
-        /* This makes the record stores in every 2000 microseconds (test it out)*/
+        /* This makes the record stores in every 20 microseconds */
         if (currentMillis >= nextRecord ){
-            
+            data[iterations].timeIterations = currentMillis / 1000 ;
             data[iterations].frequency = blinkFrequency;
             data[iterations].dutyCycle = dutyCycle;
             data[iterations].state = digitalRead(color); 
-            iterations ++;
+            ++iterations;
             nextRecord = currentMillis + (20);
+            /*If the data reaches 3k theres no point to store other data so break it to prevent over allocation*/
+            if (iterations == 3000){
+                break;
+            }
         }
     }
     while ( currentMillis < minuteMillis );
+
 
     /*ensures that the current color will be off after looping and write data into csv and make sure the memory allocation is freed after use*/
     softPwmWrite(color,0);
@@ -421,10 +425,10 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
 /*
 This function creates the CSV file and writes into it.
 */
- void writeDataIntoCSV(struct CSV *data,int sizeArr,int blinkLed){  
+ void writeDataIntoCSV(struct CSV *data,int sizeArr,int blinkLed){ 
     /* Init array*/
-    static struct CSV redLedArray[1000];
-    static struct CSV greenLedArray[1000];
+    static struct CSV redLedArray[3000];
+    static struct CSV greenLedArray[3000];
 
     /* Looping through to store the data into array*/
     if (blinkLed == BLINK_GREEN){
@@ -437,22 +441,23 @@ This function creates the CSV file and writes into it.
             redLedArray[i] = data[i];
         }
     }
+    
     /* This will trigger the user to key in the value accordingly*/
-    if (greenLedArray[0].frequency == 0  || redLedArray[0].frequency == 0 ){
+    if (greenLedArray[0].frequency == 0  || redLedArray[0].state == 0 ){
         blink();
     }
     
     /*Creates a csv if the csv doesnt exists*/
     if (checkFileExist("displayPlot.csv") == 0) {   
         FILE *CSV = fopen("displayPlot.csv","wb"); 
-        fprintf(CSV,"Green Frequency,Green Duty Cycle,Green State,Red Frequency, Red Duty Cycle,Red State");  //Creating Header for the file
+        fprintf(CSV,"Green Iterations,Green Frequency,Green Duty Cycle,Green State,Red Iterations,Red Frequency, Red Duty Cycle,Red State");  //Creating Header for the file
         
         /* Loop through array for this part to store inside CSV*/
-        for (int i = 0; i < sizeArr; i++){
+        for (int i = 0; i < sizeArr - 1; i++){
             fprintf(CSV,
-                "\n%d,%.2lf,%d,%d,%.2lf,%d",
-                greenLedArray[i].frequency,greenLedArray[i].dutyCycle,greenLedArray[i].state,
-                redLedArray[i].frequency,redLedArray[i].dutyCycle,redLedArray[i].state);
+                "\n%.2lf,%d,%.2lf,%d,%.2lf,%d,%.2lf,%d",
+                greenLedArray[i].timeIterations,greenLedArray[i].frequency,greenLedArray[i].dutyCycle,greenLedArray[i].state,
+                redLedArray[i].timeIterations,redLedArray[i].frequency,redLedArray[i].dutyCycle,redLedArray[i].state);
         }
 
         printf("CSV displayPlot has been created");
