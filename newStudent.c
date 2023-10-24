@@ -56,8 +56,8 @@ VERSION_CODENAME=buster
 #define BLINK_RED 2
 #define CONFIRM 1
 
-//Defining Microsecond
-#define TO_MICROSECONDS 1000000
+//Defining Millisecond
+#define TO_MILLIS 1000
 
 // MONITORING
 // #define STUDENTID "2101234" // the student ID is not needed in the group project of 2023
@@ -368,29 +368,31 @@ This helps to create an function for the user to store data into the csv
 void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightness,float dutyCycle){
     printf("\nBlinking...\n");
     /* Formulas and initializer*/
-    int period = (1.0f / blinkFrequency * TO_MICROSECONDS) * (dutyCycle / 100);
+    int period = (1.0f / blinkFrequency * TO_MILLIS) * (dutyCycle / 100);
     int ledState = LOW;
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
     struct CSV* data;
-    data = malloc(600000 * sizeof(struct CSV));
+    data = malloc(1000 * sizeof(struct CSV));
 
     if (data == NULL){
         fprintf(stderr, "Memory allocation failed");
         return;
     }
+    /* Change data to millis*/
+
     /* Intializes the Microsecond counter to process data accordingly*/
-    unsigned long currentMicros = micros();
-    unsigned long previousMicros = 0;
-    unsigned testData = currentMicros + (5 * TO_MICROSECONDS);
-    unsigned long minuteMicros = currentMicros + (60 * TO_MICROSECONDS);
-    unsigned long nextRecord = currentMicros;
+    unsigned long currentMillis = millis();
+    unsigned long previousMillis = 0;
+    unsigned testData = currentMillis + (5 * TO_MILLIS);
+    unsigned long minuteMillis = currentMillis + (60 * TO_MILLIS);
+    unsigned long nextRecord = currentMillis;
     int iterations = 0;
 
     do  {   
-        currentMicros = micros();
+        currentMillis = millis();
         /* If the current microsecond minus previous microsecond more than equal to period then trigger*/
-        if (currentMicros - previousMicros >= period ){
-            previousMicros = currentMicros;
+        if (currentMillis - previousMillis >= period ){
+            previousMillis = currentMillis;
             ledState = ledState == LOW ?  HIGH : LOW;
             int brightness = ledState == LOW ? blinkBrightness : 0;
             
@@ -398,17 +400,17 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
             digitalWrite(color, ledState);
         }
 
-        /* This makes the record stores in every 100microseconds (test it out)*/
-        if (currentMicros >= nextRecord ){
+        /* This makes the record stores in every 2000 microseconds (test it out)*/
+        if (currentMillis >= nextRecord ){
             
             data[iterations].frequency = blinkFrequency;
             data[iterations].dutyCycle = dutyCycle;
             data[iterations].state = digitalRead(color); 
             iterations ++;
-            nextRecord = currentMicros + (100);
+            nextRecord = currentMillis + (20);
         }
     }
-    while ( currentMicros < testData );
+    while ( currentMillis < minuteMillis );
 
     /*ensures that the current color will be off after looping and write data into csv and make sure the memory allocation is freed after use*/
     softPwmWrite(color,0);
@@ -421,8 +423,8 @@ This function creates the CSV file and writes into it.
 */
  void writeDataIntoCSV(struct CSV *data,int sizeArr,int blinkLed){  
     /* Init array*/
-    static struct CSV redLedArray[600000];
-    static struct CSV greenLedArray[600000];
+    static struct CSV redLedArray[1000];
+    static struct CSV greenLedArray[1000];
 
     /* Looping through to store the data into array*/
     if (blinkLed == BLINK_GREEN){
