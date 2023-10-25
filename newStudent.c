@@ -76,6 +76,7 @@ float getBlinkDutyCycle();
 void writeDataIntoCSV();
 void recordWaveDataIntoMemory(int,int,int,float);
 int checkFileExist(const char *fileName);
+float getTimeStampInSeconds();
 void endProgram();
 
 /* This creates a structure(object) to store in value with frequency and state*/
@@ -384,8 +385,10 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
     unsigned long currentMillis = millis();
     unsigned long previousMillis = 0;
     unsigned long minuteMillis = currentMillis + (60 * TO_MILLIS);
+    unsigned long testData = currentMillis + (5 * TO_MILLIS);
     unsigned long nextRecord = currentMillis;
     int iterations = 0;
+    float timeIteration = 0;
 
     do  {   
         currentMillis = millis();
@@ -401,7 +404,7 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
 
         /* This makes the record stores in every 20 microseconds */
         if (currentMillis >= nextRecord ){
-            data[iterations].timeIterations = currentMillis / 1000 ;
+            data[iterations].timeIterations = getTimeStampInSeconds() ;
             data[iterations].frequency = blinkFrequency;
             data[iterations].dutyCycle = dutyCycle;
             data[iterations].state = digitalRead(color); 
@@ -449,7 +452,7 @@ This function creates the CSV file and writes into it.
     
     /*Creates a csv if the csv doesnt exists*/
     if (checkFileExist("displayPlot.csv") == 0) {   
-        FILE *CSV = fopen("displayPlot.csv","wb"); 
+        FILE *CSV = fopen("displayPlot.csv","wb+"); 
         fprintf(CSV,"Green Iterations,Green Frequency,Green Duty Cycle,Green State,Red Iterations,Red Frequency, Red Duty Cycle,Red State");  //Creating Header for the file
         
         /* Loop through array for this part to store inside CSV*/
@@ -464,6 +467,20 @@ This function creates the CSV file and writes into it.
         fclose(CSV);
     }
 }
+
+
+float getTimeStampInSeconds(){
+
+    static float time = 0;
+
+    if(time >= 60) {
+        time = 0;
+    }
+
+    time += 0.02;
+    return time;
+}
+
 
 /*
 This helps to check whether the file exists
