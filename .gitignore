@@ -54,3 +54,4 @@ dkms.conf
 #Ignore oldnewStudent
 oldnewStudent.c
 displayPlot.csv
+timeIterations.c
