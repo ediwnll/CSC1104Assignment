@@ -379,14 +379,12 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
         fprintf(stderr, "Memory allocation failed");
         return;
     }
-    /* Change data to millis*/
-
-    /* Intializes the Millisecond counter to process data accordingly*/
-    unsigned long currentMillis = millis();
-    unsigned long previousMillis = 0;
-    unsigned long minuteMillis = currentMillis + (60 * TO_MILLIS);
-    unsigned long testData = currentMillis + (5 * TO_MILLIS);
-    unsigned long nextRecord = currentMillis;
+    /* Intializes the Microsecond counter to process data accordingly*/
+    unsigned long currentMicros = micros();
+    unsigned long previousMicros = 0;
+    unsigned testData = currentMicros + (5 * TO_MICROSECONDS);
+    unsigned long minuteMicros = currentMicros + (60 * TO_MICROSECONDS);
+    unsigned long nextRecord = currentMicros;
     int iterations = 0;
     float timeIteration = 0;
 
@@ -404,7 +402,7 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
 
         /* This makes the record stores in every 20 microseconds */
         if (currentMillis >= nextRecord ){
-            data[iterations].timeIterations = getTimeStampInSeconds() ;
+            data[iterations].timeIterations = currentMillis / 1000 ;
             data[iterations].frequency = blinkFrequency;
             data[iterations].dutyCycle = dutyCycle;
             data[iterations].state = digitalRead(color); 
@@ -452,11 +450,11 @@ This function creates the CSV file and writes into it.
     
     /*Creates a csv if the csv doesnt exists*/
     if (checkFileExist("displayPlot.csv") == 0) {   
-        FILE *CSV = fopen("displayPlot.csv","wb+"); 
-        fprintf(CSV,"Green Iterations,Green Frequency,Green Duty Cycle,Green State,Red Iterations,Red Frequency, Red Duty Cycle,Red State");  //Creating Header for the file
+        FILE *CSV = fopen("displayPlot.csv","wb"); 
+        fprintf(CSV,"Green Frequency,Green Duty Cycle,Green State,Red Frequency, Red Duty Cycle,Red State");  //Creating Header for the file
         
         /* Loop through array for this part to store inside CSV*/
-        for (int i = 0; i < sizeArr - 1; i++){
+        for (int i = 0; i < sizeArr; i++){
             fprintf(CSV,
                 "\n%.2lf,%d,%.2lf,%d,%.2lf,%d,%.2lf,%d",
                 greenLedArray[i].timeIterations,greenLedArray[i].frequency,greenLedArray[i].dutyCycle,greenLedArray[i].state,
