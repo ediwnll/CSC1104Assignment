@@ -70,11 +70,10 @@ void turnOnLeds();
 void blink();
 int getBlinkLed();
 int getBlinkFrequency();
-int getBlinkBrightness();
-int confirmBlinkSelection(int,int,int,float);
-float getBlinkDutyCycle();
+float getBlinkBrightness();
+int confirmBlinkSelection(int,int,float);
 void writeDataIntoCSV();
-void recordWaveDataIntoMemory(int,int,int,float);
+void recordWaveDataIntoMemory(int,int,float);
 int checkFileExist(const char *fileName);
 float getTimeStampInSeconds();
 void endProgram();
@@ -212,12 +211,11 @@ void blink()
 
     int blinkLed = getBlinkLed();
     int frequency = getBlinkFrequency();
-    int brightness = getBlinkBrightness();
-    float dutyCycle = getBlinkDutyCycle();
+    float brightness = getBlinkBrightness();
 
-    if (confirmBlinkSelection(blinkLed, frequency, brightness,dutyCycle) == CONFIRM)
+    if (confirmBlinkSelection(blinkLed, frequency, brightness) == CONFIRM)
     {
-        recordWaveDataIntoMemory(blinkLed,frequency,brightness,dutyCycle);
+        recordWaveDataIntoMemory(blinkLed,frequency,brightness);
         system("clear");
     }
     else
@@ -282,16 +280,16 @@ int getBlinkFrequency()
 /*
 Menu to get user selection on LED brightness
 */
-int getBlinkBrightness()
+float getBlinkBrightness()
 {
 
-    int selection;
+    float selection;
 
     printf("Select LED brightness during blink.\n\n");
     printf("Enter whole numbers between 0 to 100\n");
     printf("Brightness (%%): ");
 
-    scanf("%d", &selection);
+    scanf("%f", &selection);
 
     if (selection < 0 || selection > 100)
     {
@@ -306,32 +304,10 @@ int getBlinkBrightness()
     }
 }
 
-float getBlinkDutyCycle(){
-
-    float selection;
-
-    printf("Select LED brightness during blink.\n\n");
-    printf("Enter any numbers between 0 to 100\n");
-    printf("Duty Cycle (%%): ");
-
-    scanf("%f", &selection);
-
-    if (selection < 0 || selection > 100)
-    {
-        system("clear");
-        printf("Invalid Input. Try Again...\n\n");
-        getBlinkDutyCycle();
-    }
-
-    system("clear");
-    return selection;
-
-}
-
 /*
 Menu for user to acknowledge the blink configurations input
 */
-int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness,float dutyCycle)
+int confirmBlinkSelection(int blinkLed, int blinkFrequency, float blinkBrightness)
 {
 
     int selection;
@@ -345,8 +321,7 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness,
     printf("Confirm your blink configurations.\n\n");
     printf("LED to blink: %s\n", blinkLedString);
     printf("Blink Frequency: %dHz\n", blinkFrequency);
-    printf("Blink Brightness: %d%%\n", blinkBrightness);
-    printf("Duty Cycle: %.2f%%\n\n", dutyCycle);
+    printf("Blink Brightness: %.2lf%%\n", blinkBrightness);
     printf("[1] Confirm Configuration\n");
     printf("[0] Return to Home\n");
     printf("\nYour Selection: ");
@@ -357,7 +332,7 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness,
     {
         system("clear");
         printf("Invalid Input. Try Again...\n\n");
-        confirmBlinkSelection(blinkLed, blinkFrequency, blinkBrightness,dutyCycle);
+        confirmBlinkSelection(blinkLed, blinkFrequency, blinkBrightness);
     }
 
     return selection;
@@ -366,10 +341,10 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, int blinkBrightness,
 /*
 This helps to create an function for the user to store data into the csv 
 */
-void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightness,float dutyCycle){
+void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,float blinkBrightness){
     printf("\nBlinking...\n");
     /* Formulas and initializer*/
-    int period = (1.0f / blinkFrequency * TO_MILLIS) * (dutyCycle / 100);
+    int period = (1.0f / blinkFrequency * TO_MILLIS) * (blinkBrightness / 100);
     int ledState = LOW;
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
     struct CSV* data;
@@ -385,6 +360,7 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
     unsigned long previousMillis = 0;
     unsigned long minuteMillis = currentMillis + (60 * TO_MILLIS);
     unsigned long nextRecord = currentMillis;
+    unsigned long testData = currentMillis + (5 * TO_MILLIS);
     int iterations = 0;
 
     do  {   
@@ -403,17 +379,17 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
         if (currentMillis >= nextRecord ){
             data[iterations].timeIterations = getTimeStampInSeconds() ;
             data[iterations].frequency = blinkFrequency;
-            data[iterations].dutyCycle = dutyCycle;
+            data[iterations].dutyCycle = blinkBrightness;
             data[iterations].state = digitalRead(color); 
-            ++iterations;
-            nextRecord = currentMillis + (20);
+            iterations++;
+            nextRecord = currentMillis + (1);
             /*If the iteration reaches 3k, will break the function and continue on*/
             if (iterations == 3000){
                 break;
             }
         }
     }
-    while ( currentMillis < minuteMillis );
+    while ( currentMillis < testData );
 
     /*ensures that the current color will be off after looping and write data into csv and make sure the memory allocation is freed after use*/
     softPwmWrite(color,0);
@@ -447,14 +423,14 @@ This function creates the CSV file and writes into it.
     }
     
     /*Checks the csv whether it exists*/
-    if (checkFileExist("displayPlot.csv") == 0) {  
+   // if (checkFileExist("displayPlot.csv") == 0) {  
         /*Creating a new csv to store the data in and header*/ 
-        FILE *CSV = fopen("displayPlot.csv","wb"); 
-        fprintf(CSV,"Green Frequency,Green Duty Cycle,Green State,Red Frequency, Red Duty Cycle,Red State");  //Creating Header for the file
+        FILE *CSV = fopen("displayPlot.csv","wb+"); 
+        fprintf(CSV,"Green Iterations,Green Frequency,Green Duty Cycle,Green State,Red Iterations,Red Frequency, Red Duty Cycle,Red State");  //Creating Header for the file
         
         for (int i = 0; i < sizeArr; i++){
             fprintf(CSV,
-                "\n%.2lf,%d,%.2lf,%d,%.2lf,%d,%.2lf,%d",
+                "\n%.3lf,%d,%.2lf,%d,%.3lf,%d,%.2lf,%d",
                 greenLedArray[i].timeIterations,greenLedArray[i].frequency,greenLedArray[i].dutyCycle,greenLedArray[i].state,
                 redLedArray[i].timeIterations,redLedArray[i].frequency,redLedArray[i].dutyCycle,redLedArray[i].state);
         }
@@ -462,7 +438,7 @@ This function creates the CSV file and writes into it.
         /* Informs user CSV has been created and close the file editor*/
         printf("CSV displayPlot has been created");
         fclose(CSV);
-    }
+    //}
 }
 
 /* 
@@ -476,7 +452,7 @@ float getTimeStampInSeconds(){
         time = 0;
     }
 
-    time += 0.02;
+    time += 0.001;
     return time;
 }
 
