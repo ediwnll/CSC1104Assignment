@@ -379,18 +379,17 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
         fprintf(stderr, "Memory allocation failed");
         return;
     }
-    /* Intializes the Microsecond counter to process data accordingly*/
-    unsigned long currentMicros = micros();
-    unsigned long previousMicros = 0;
-    unsigned testData = currentMicros + (5 * TO_MICROSECONDS);
-    unsigned long minuteMicros = currentMicros + (60 * TO_MICROSECONDS);
-    unsigned long nextRecord = currentMicros;
+
+    /* Intializes the Millisecond counter to compare insert data into memory*/
+    unsigned long currentMillis = millis();
+    unsigned long previousMillis = 0;
+    unsigned long minuteMillis = currentMillis + (60 * TO_MILLIS);
+    unsigned long nextRecord = currentMillis;
     int iterations = 0;
-    float timeIteration = 0;
 
     do  {   
         currentMillis = millis();
-        /* If the current microsecond minus previous microsecond more than equal to period then trigger*/
+        /* If period is more than currentMillis minus previous millis, this will trigger*/
         if (currentMillis - previousMillis >= period ){
             previousMillis = currentMillis;
             ledState = ledState == LOW ?  HIGH : LOW;
@@ -400,22 +399,21 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
             digitalWrite(color, ledState);
         }
 
-        /* This makes the record stores in every 20 microseconds */
+        /* Stores record every 20millisecond */
         if (currentMillis >= nextRecord ){
-            data[iterations].timeIterations = currentMillis / 1000 ;
+            data[iterations].timeIterations = getTimeStampInSeconds() ;
             data[iterations].frequency = blinkFrequency;
             data[iterations].dutyCycle = dutyCycle;
             data[iterations].state = digitalRead(color); 
             ++iterations;
             nextRecord = currentMillis + (20);
-            /*If the data reaches 3k theres no point to store other data so break it to prevent over allocation*/
+            /*If the iteration reaches 3k, will break the function and continue on*/
             if (iterations == 3000){
                 break;
             }
         }
     }
     while ( currentMillis < minuteMillis );
-
 
     /*ensures that the current color will be off after looping and write data into csv and make sure the memory allocation is freed after use*/
     softPwmWrite(color,0);
@@ -427,7 +425,7 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,int blinkBrightnes
 This function creates the CSV file and writes into it.
 */
  void writeDataIntoCSV(struct CSV *data,int sizeArr,int blinkLed){ 
-    /* Init array*/
+    /* Init array to store data inside*/
     static struct CSV redLedArray[3000];
     static struct CSV greenLedArray[3000];
 
@@ -443,17 +441,17 @@ This function creates the CSV file and writes into it.
         }
     }
     
-    /* This will trigger the user to key in the value accordingly*/
+    /* This will trigger the user to key in the value if one of the array doesnt contain value accordingly*/
     if (greenLedArray[0].frequency == 0  || redLedArray[0].state == 0 ){
         blink();
     }
     
-    /*Creates a csv if the csv doesnt exists*/
-    if (checkFileExist("displayPlot.csv") == 0) {   
+    /*Checks the csv whether it exists*/
+    if (checkFileExist("displayPlot.csv") == 0) {  
+        /*Creating a new csv to store the data in and header*/ 
         FILE *CSV = fopen("displayPlot.csv","wb"); 
         fprintf(CSV,"Green Frequency,Green Duty Cycle,Green State,Red Frequency, Red Duty Cycle,Red State");  //Creating Header for the file
         
-        /* Loop through array for this part to store inside CSV*/
         for (int i = 0; i < sizeArr; i++){
             fprintf(CSV,
                 "\n%.2lf,%d,%.2lf,%d,%.2lf,%d,%.2lf,%d",
@@ -461,12 +459,15 @@ This function creates the CSV file and writes into it.
                 redLedArray[i].timeIterations,redLedArray[i].frequency,redLedArray[i].dutyCycle,redLedArray[i].state);
         }
 
+        /* Informs user CSV has been created and close the file editor*/
         printf("CSV displayPlot has been created");
         fclose(CSV);
     }
 }
 
-
+/* 
+This generates a time stamp for user to identify when the data will be on
+*/
 float getTimeStampInSeconds(){
 
     static float time = 0;
