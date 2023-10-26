@@ -55,7 +55,7 @@ VERSION_CODENAME=buster
 #define BLINK_RED 2
 #define CONFIRM 1
 
-//Defining Millisecond
+// Defining Millisecond
 #define TO_MILLIS 1000
 
 // MONITORING
@@ -71,15 +71,16 @@ void blink();
 int getBlinkLed();
 int getBlinkFrequency();
 float getBlinkBrightness();
-int confirmBlinkSelection(int,int,float);
+int confirmBlinkSelection(int, int, float);
 void writeDataIntoCSV();
-void recordWaveDataIntoMemory(int,int,float);
+void recordWaveDataIntoMemory(int, int, float);
 int checkFileExist(const char *fileName);
 void endProgram();
 
 /* This creates a structure(object) to store in value with frequency and state*/
-struct CSV{
-    float timeIterations;
+struct CSV
+{
+    int timeIterations;
     int frequency;
     float dutyCycle;
     int state;
@@ -161,12 +162,14 @@ int getUserSelection()
 
     scanf("%d", &selection);
 
-    if (selection < 0 || selection > 3 ){
+    if (selection < 0 || selection > 3)
+    {
         system("clear");
         printf("Invalid Input. Try Again...\n\n");
         getUserSelection();
     }
-    else {
+    else
+    {
         system("clear");
         return selection;
     }
@@ -214,7 +217,7 @@ void blink()
 
     if (confirmBlinkSelection(blinkLed, frequency, brightness) == CONFIRM)
     {
-        recordWaveDataIntoMemory(blinkLed,frequency,brightness);
+        recordWaveDataIntoMemory(blinkLed, frequency, brightness);
         system("clear");
     }
     else
@@ -338,18 +341,20 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, float blinkBrightnes
 }
 
 /*
-This helps to create an function for the user to store data into the csv 
+This helps to create an function for the user to store data into the csv
 */
-void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,float blinkBrightness){
+void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrightness)
+{
     printf("\nBlinking...\n");
     /* Formulas and initializer*/
-    int period = (1.0f / blinkFrequency * TO_MILLIS) * (blinkBrightness / 100);
+    int period = (1.0f / blinkFrequency) * TO_MILLIS;
     int ledState = LOW;
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
-    struct CSV* data;
+    struct CSV *data;
     data = malloc(3000 * sizeof(struct CSV));
 
-    if (data == NULL){
+    if (data == NULL)
+    {
         fprintf(stderr, "Memory allocation failed");
         return;
     }
@@ -357,97 +362,110 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,float blinkBrightn
     /* Intializes the Millisecond counter to compare insert data into memory*/
     unsigned long currentMillis = millis();
     unsigned long previousMillis = 0;
-    unsigned long minuteMillis = currentMillis + (60 * TO_MILLIS);
     unsigned long nextRecord = currentMillis;
     unsigned long testData = currentMillis + (5 * TO_MILLIS);
     int iterations = 0;
-    float timeLapse = 0;
+    int timeLapse = 0;
 
-    do  {   
+    do
+    {
         currentMillis = millis();
-        /* If period is more than currentMillis minus previous millis, this will trigger*/
-        if (currentMillis - previousMillis >= period ){
-            previousMillis = currentMillis;
-            ledState = ledState == LOW ?  HIGH : LOW;
-            int brightness = ledState == LOW ? blinkBrightness : 0;
-            
+        /* If half the period is more than currentMillis minus previous millis, this will trigger*/
+        if (currentMillis - previousMillis >= period / 2)
+        {
+            ledState = ledState == LOW ? HIGH : LOW;
+            int brightness = ledState == LOW ? 0 : blinkBrightness * 10;
+
             softPwmWrite(color, brightness);
             digitalWrite(color, ledState);
+            previousMillis = currentMillis;
         }
 
         /* Stores record every 20millisecond */
-        if (currentMillis >= nextRecord ){
-            data[iterations].timeIterations = timeLapse += 0.01 ;
+        if (currentMillis >= nextRecord)
+        {
+            data[iterations].timeIterations = timeLapse;
             data[iterations].frequency = blinkFrequency;
             data[iterations].dutyCycle = blinkBrightness;
-            data[iterations].state = digitalRead(color); 
+            data[iterations].state = digitalRead(color);
             iterations++;
-            nextRecord = currentMillis + (1);
+            nextRecord = currentMillis + (20);
+            timeLapse += 20;
             /*If the iteration reaches 3k, will break the function and continue on*/
-            if (iterations == 3000){
+            if (iterations == 3000)
+            {
                 break;
             }
         }
-    }
-    while ( currentMillis < testData );
+    } while (currentMillis < testData);
 
     /*ensures that the current color will be off after looping and write data into csv and make sure the memory allocation is freed after use*/
-    softPwmWrite(color,0);
-    writeDataIntoCSV(data,iterations,blinkLed);
+    softPwmWrite(color, 0);
+    writeDataIntoCSV(data, iterations, blinkLed);
     free(data);
 }
 
 /*
 This function creates the CSV file and writes into it.
 */
- void writeDataIntoCSV(struct CSV *data,int sizeArr,int blinkLed){ 
+void writeDataIntoCSV(struct CSV *data, int sizeArr, int blinkLed)
+{
     /* Init array to store data inside*/
     static struct CSV redLedArray[3000];
     static struct CSV greenLedArray[3000];
 
     /* Looping through to store the data into array*/
-    if (blinkLed == BLINK_GREEN){
-         for (int i = 0; i < sizeArr; i ++){
+    if (blinkLed == BLINK_GREEN)
+    {
+        for (int i = 0; i < sizeArr; i++)
+        {
             greenLedArray[i] = data[i];
         }
     }
-    else{
-        for (int i = 0; i < sizeArr; i ++){
+    else
+    {
+        for (int i = 0; i < sizeArr; i++)
+        {
             redLedArray[i] = data[i];
         }
     }
-    
+
     /* This will trigger the user to key in the value if one of the array doesnt contain value accordingly*/
-    if (greenLedArray[0].frequency == 0  || redLedArray[0].state == 0 ){
+    if (greenLedArray[0].frequency == 0 || redLedArray[0].state == 0)
+    {
         blink();
     }
-    
-    /*Checks the csv whether it exists*/
-   // if (checkFileExist("displayPlot.csv") == 0) {  
-        /*Creating a new csv to store the data in and header*/ 
-        FILE *CSV = fopen("displayPlot.csv","wb+"); 
-        fprintf(CSV,"Green Iterations,Green Frequency,Green Duty Cycle,Green State,Red Iterations,Red Frequency, Red Duty Cycle,Red State");  //Creating Header for the file
-        
-        for (int i = 0; i < sizeArr; i++){
-            fprintf(CSV,
-                "\n%.3lf,%d,%.2lf,%d,%.3lf,%d,%.2lf,%d",
-                greenLedArray[i].timeIterations,greenLedArray[i].frequency,greenLedArray[i].dutyCycle,greenLedArray[i].state,
-                redLedArray[i].timeIterations,redLedArray[i].frequency,redLedArray[i].dutyCycle,redLedArray[i].state);
-        }
 
-        /* Informs user CSV has been created and close the file editor*/
-        printf("CSV displayPlot has been created");
-        fclose(CSV);
+    /*Checks the csv whether it exists*/
+    // if (checkFileExist("displayPlot.csv") == 0)
+    // {
+    /*Creating a new csv to store the data in and header*/
+    FILE *CSV = fopen("displayPlot.csv", "wb+");
+    fprintf(CSV, "Green Iterations,Green Frequency,Green Duty Cycle,Green State,Red Iterations,Red Frequency, Red Duty Cycle,Red State"); // Creating Header for the file
+
+    for (int i = 0; i < sizeArr; i++)
+    {
+        fprintf(CSV,
+                "\n%d,%d,%.1f,%d,%d,%d,%.1f,%d",
+                greenLedArray[i].timeIterations, greenLedArray[i].frequency, greenLedArray[i].dutyCycle, greenLedArray[i].state,
+                redLedArray[i].timeIterations, redLedArray[i].frequency, redLedArray[i].dutyCycle, redLedArray[i].state);
+    }
+
+    /* Informs user CSV has been created and close the file editor*/
+    printf("CSV displayPlot has been created");
+    fclose(CSV);
     //}
 }
 
 /*
 This helps to check whether the file exists
 */
-int checkFileExist(const char *fileName){
+int checkFileExist(const char *fileName)
+{
     FILE *file;
 
-    if ( file = fopen(fileName,"rb")  ) { 
+    if (file = fopen(fileName, "rb"))
+    {
         fclose(file);
         return 1;
     }
