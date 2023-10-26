@@ -75,7 +75,6 @@ int confirmBlinkSelection(int,int,float);
 void writeDataIntoCSV();
 void recordWaveDataIntoMemory(int,int,float);
 int checkFileExist(const char *fileName);
-float getTimeStampInSeconds();
 void endProgram();
 
 /* This creates a structure(object) to store in value with frequency and state*/
@@ -362,6 +361,7 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,float blinkBrightn
     unsigned long nextRecord = currentMillis;
     unsigned long testData = currentMillis + (5 * TO_MILLIS);
     int iterations = 0;
+    float timeLapse = 0;
 
     do  {   
         currentMillis = millis();
@@ -377,7 +377,7 @@ void recordWaveDataIntoMemory(int blinkLed,int blinkFrequency,float blinkBrightn
 
         /* Stores record every 20millisecond */
         if (currentMillis >= nextRecord ){
-            data[iterations].timeIterations = getTimeStampInSeconds() ;
+            data[iterations].timeIterations = timeLapse += 0.01 ;
             data[iterations].frequency = blinkFrequency;
             data[iterations].dutyCycle = blinkBrightness;
             data[iterations].state = digitalRead(color); 
@@ -440,22 +440,6 @@ This function creates the CSV file and writes into it.
         fclose(CSV);
     //}
 }
-
-/* 
-This generates a time stamp for user to identify when the data will be on
-*/
-float getTimeStampInSeconds(){
-
-    static float time = 0;
-
-    if(time >= 60) {
-        time = 0;
-    }
-
-    time += 0.001;
-    return time;
-}
-
 
 /*
 This helps to check whether the file exists
