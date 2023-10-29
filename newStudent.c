@@ -221,6 +221,7 @@ void blink()
         system("clear");
     }
     else
+        system("clear");
         return;
 }
 
@@ -288,7 +289,7 @@ float getBlinkBrightness()
     float selection;
 
     printf("Select LED brightness during blink.\n\n");
-    printf("Enter whole numbers between 0 to 100\n");
+    printf("Enter any numbers between 0 to 100\n");
     printf("Brightness (%%): ");
 
     scanf("%f", &selection);
@@ -363,7 +364,7 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
     unsigned long currentMillis = millis();
     unsigned long previousMillis = 0;
     unsigned long nextRecord = currentMillis;
-    unsigned long testData = currentMillis + (5 * TO_MILLIS);
+    unsigned long testData = currentMillis + (60 * TO_MILLIS);
     int iterations = 0;
     int timeLapse = 0;
 
@@ -391,12 +392,14 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
             iterations++;
             nextRecord = currentMillis + (20);
             timeLapse += 20;
-            /*If the iteration reaches 3k, will break the function and continue on*/
-            if (iterations == 3000)
-            {
-                break;
-            }
         }
+
+        /*If the iteration reaches 3k, will break the function and continue on*/
+        if (iterations == 3000)
+        {
+            break;
+        }
+
     } while (currentMillis < testData);
 
     /*ensures that the current color will be off after looping and write data into csv and make sure the memory allocation is freed after use*/
@@ -431,30 +434,29 @@ void writeDataIntoCSV(struct CSV *data, int sizeArr, int blinkLed)
     }
 
     /* This will trigger the user to key in the value if one of the array doesnt contain value accordingly*/
-    if (greenLedArray[0].frequency == 0 || redLedArray[0].state == 0)
+    if (greenLedArray[0].frequency == 0 || redLedArray[0].frequency == 0)
     {
         blink();
     }
 
-    /*Checks the csv whether it exists*/
-    // if (checkFileExist("displayPlot.csv") == 0)
-    // {
-    /*Creating a new csv to store the data in and header*/
-    FILE *CSV = fopen("displayPlot.csv", "wb+");
-    fprintf(CSV, "Green Iterations,Green Frequency,Green Duty Cycle,Green State,Red Iterations,Red Frequency, Red Duty Cycle,Red State"); // Creating Header for the file
+    if(checkFileExist("displayPlot.csv") == 0){
+        /*Creating a new csv to store the data in and header*/
+        FILE *CSV = fopen("displayPlot.csv", "wb+");
+        fprintf(CSV, "Green Iterations,Green Frequency,Green Duty Cycle,Green State,Red Iterations,Red Frequency, Red Duty Cycle,Red State"); // Creating Header for the file
 
-    for (int i = 0; i < sizeArr; i++)
-    {
-        fprintf(CSV,
-                "\n%d,%d,%.1f,%d,%d,%d,%.1f,%d",
-                greenLedArray[i].timeIterations, greenLedArray[i].frequency, greenLedArray[i].dutyCycle, greenLedArray[i].state,
-                redLedArray[i].timeIterations, redLedArray[i].frequency, redLedArray[i].dutyCycle, redLedArray[i].state);
+        for (int i = 0; i < sizeArr; i++)
+        {
+            fprintf(CSV,
+                    "\n%d,%d,%.1f,%d,%d,%d,%.1f,%d",
+                    greenLedArray[i].timeIterations, greenLedArray[i].frequency, greenLedArray[i].dutyCycle, greenLedArray[i].state,
+                    redLedArray[i].timeIterations, redLedArray[i].frequency, redLedArray[i].dutyCycle, redLedArray[i].state);
+        }
+
+        /* Informs user CSV has been created and close the file editor*/
+        printf("New CSV file displayPlot has been created");
+        fclose(CSV);
     }
-
-    /* Informs user CSV has been created and close the file editor*/
-    printf("CSV displayPlot has been created");
-    fclose(CSV);
-    //}
+    
 }
 
 /*
