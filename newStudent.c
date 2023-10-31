@@ -72,18 +72,30 @@ int getBlinkLed();
 int getBlinkFrequency();
 float getBlinkBrightness();
 int confirmBlinkSelection(int, int, float);
+int confirmBlinkLED();
 void writeDataIntoCSV();
+void blinkBoth(int, int, float);
+void updateLED();
 void recordWaveDataIntoMemory(int, int, float);
 int checkFileExist(const char *fileName);
 void endProgram();
 
-/* This creates a structure(object) to store in value with frequency and state*/
+/* This creates a structure(object)*/
 struct CSV
 {
     int timeIterations;
     int frequency;
     float dutyCycle;
     int state;
+};
+
+struct ledData 
+{
+    int blinkLed;
+    int blinkFrequency;
+    float blinkBrightness;
+    int ledState;
+    int previousMillis;
 };
 
 /* MAIN PROGRAM */
@@ -206,17 +218,18 @@ When user wants to blink LED, this function will get all the blinking configurat
 It gets from the user the LED to blink, frequency and brightness.
 Then, it will call a function to attempt handshake with Monitor before executing the blink
 */
-void blink()
+void blink(int color)
 {
     system("clear");
     printf("\nBlink...\n");
 
-    int blinkLed = getBlinkLed();
+    int blinkLed = getBlinkLed(color);
     int frequency = getBlinkFrequency();
     float brightness = getBlinkBrightness();
 
     if (confirmBlinkSelection(blinkLed, frequency, brightness) == CONFIRM)
     {
+        //blinkBoth(blinkLed,frequency,brightness);
         recordWaveDataIntoMemory(blinkLed, frequency, brightness);
         system("clear");
     }
@@ -228,8 +241,11 @@ void blink()
 /*
 Menu to get user selction on LED to blink
 */
-int getBlinkLed()
+int getBlinkLed(int color)
 {
+    if (color == RED || color == GREEN){
+        return color;
+    }
 
     int selection;
 
@@ -244,7 +260,7 @@ int getBlinkLed()
     {
         system("clear");
         printf("Invalid Input. Try Again...\n\n");
-        getBlinkLed();
+        getBlinkLed(0);
     }
     else
     {
@@ -316,7 +332,7 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, float blinkBrightnes
     int selection;
     char blinkLedString[] = "Green";
 
-    if (blinkLed == BLINK_RED)
+    if (blinkLed == BLINK_RED || blinkLed == RED)
     {
         strcpy(blinkLedString, "Red");
     }
@@ -341,14 +357,88 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, float blinkBrightnes
     return selection;
 }
 
+
+int confirmBlinkLED(){
+
+    int selection;
+
+    printf("Choose your blink choice.\n\n");
+    printf("Enter blink choice:\n");
+    printf("[1] Blink one LED\n");
+    printf("[2] Blink both LEDs\n");
+    printf("\nYour Selection: ");
+
+    scanf("%d",selection);
+
+    if (selection < 1 || selection > 2){
+        system("clear");
+        printf("Invalid Input. Try Again...\n\n");
+        confirmBlinkLED();
+
+    }
+    return selection;
+}
+
+
+void blinkBoth(int blinkLed, int blinkFrequency, float blinkBrightness){
+
+    /*Initi table*/
+    static struct ledData redData, greenData;
+    int oppositeColor;    
+
+    if (blinkLed == BLINK_GREEN || blinkLed == GREEN){
+        greenData = (struct ledData) {GREEN, blinkFrequency, blinkBrightness,LOW,0};
+        oppositeColor = RED;
+    } else{
+        redData = (struct ledData) {RED, blinkFrequency, blinkBrightness,LOW,0};
+        oppositeColor = GREEN;
+    }
+    
+    if (redData.blinkLed != RED || greenData.blinkLed != GREEN) {
+        blink(oppositeColor);
+    }
+
+    int currentMillis = millis();
+    int nextMinuteMillis = millis() + (60 * TO_MILLIS);
+
+    do {
+        currentMillis = millis();
+        updateLED(&redData);
+        updateLED(&greenData);
+    }
+    while(currentMillis < nextMinuteMillis);
+
+    softPwmWrite(GREEN,0);
+    softPwmWrite(RED,0);
+
+}
+
+void updateLED(struct ledData *ledData){
+    int currentMillis = millis();
+    int period = ((1.0f / ledData->blinkFrequency) * TO_MILLIS * ((ledData->blinkBrightness/100))) / 2;
+
+    if (currentMillis - ledData->previousMillis >= period) {
+        ledData->ledState = ledData->ledState == LOW ? HIGH : LOW;
+        int brightness = ledData->ledState == LOW ? 0 : ledData->blinkBrightness * 10;
+
+        softPwmWrite(ledData->blinkLed, brightness);
+        digitalWrite(ledData->blinkLed, ledData->ledState);
+        ledData->previousMillis = currentMillis;
+    }
+}
+
+
 /*
 This helps to create an function for the user to store data into the csv
 */
+
 void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrightness)
 {
     printf("\nBlinking...\n");
     /* Formulas and initializer*/
     int period = (1.0f / blinkFrequency) * TO_MILLIS;
+    int onTime = period * (blinkBrightness/100);
+    int offTime = period * (1 - (blinkBrightness/100));
     int ledState = LOW;
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
     struct CSV *data;
@@ -364,25 +454,32 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
     unsigned long currentMillis = millis();
     unsigned long previousMillis = 0;
     unsigned long nextRecord = currentMillis;
-    unsigned long testData = currentMillis + (60 * TO_MILLIS);
+    unsigned long testData = currentMillis + (5 * TO_MILLIS);
     int iterations = 0;
     int timeLapse = 0;
+    int brightness = 0; 
 
     do
     {
         currentMillis = millis();
         /* If half the period is more than currentMillis minus previous millis, this will trigger*/
-        if (currentMillis - previousMillis >= period / 2)
-        {
-            ledState = ledState == LOW ? HIGH : LOW;
-            int brightness = ledState == LOW ? 0 : blinkBrightness * 10;
 
-            softPwmWrite(color, brightness);
-            digitalWrite(color, ledState);
+        if(ledState == HIGH && currentMillis - previousMillis >= onTime){
+            ledState = LOW;
+            brightness = blinkBrightness;
             previousMillis = currentMillis;
         }
 
-        /* Stores record every 20millisecond */
+        if(ledState == LOW  && currentMillis - previousMillis >= offTime){
+            
+            ledState = HIGH;
+            brightness = 0;
+            previousMillis = currentMillis;
+        }
+    
+        softPwmWrite(color, brightness);
+        digitalWrite(color, ledState);
+        /* Stores record every 10millisecond */
         if (currentMillis >= nextRecord)
         {
             data[iterations].timeIterations = timeLapse;
@@ -390,8 +487,8 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
             data[iterations].dutyCycle = blinkBrightness;
             data[iterations].state = digitalRead(color);
             iterations++;
-            nextRecord = currentMillis + (20);
-            timeLapse += 20;
+            nextRecord = currentMillis + (10);
+            timeLapse += 10;
         }
 
         /*If the iteration reaches 3k, will break the function and continue on*/
@@ -436,7 +533,7 @@ void writeDataIntoCSV(struct CSV *data, int sizeArr, int blinkLed)
     /* This will trigger the user to key in the value if one of the array doesnt contain value accordingly*/
     if (greenLedArray[0].frequency == 0 || redLedArray[0].frequency == 0)
     {
-        blink();
+        blink(0);
     }
 
     if(checkFileExist("displayPlot.csv") == 0){
