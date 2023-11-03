@@ -425,15 +425,8 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
         updateLED(&greenData,currentMillis);
         /* Think of way to write in the format of green and red data set accordingly*/
         if (currentMillis >= nextRecord){
-            redDataArr[iterations].timeIterations = timeLapse;
-            redDataArr[iterations].frequency = redData.blinkFrequency;
-            redDataArr[iterations].dutyCycle = redData.blinkBrightness;
-            redDataArr[iterations].state = digitalRead(RED);
-            
-            greenDataArr[iterations].timeIterations = timeLapse;
-            greenDataArr[iterations].frequency = greenData.blinkFrequency;
-            greenDataArr[iterations].dutyCycle = greenData.blinkBrightness;
-            greenDataArr[iterations].state = digitalRead(GREEN);
+            storeDataIntoMemory(redDataArr,&redData,timeLapse,iterations);
+            storeDataIntoMemory(greenDataArr,&greenData,timeLapse,iterations);
             iterations++;
             nextRecord = currentMillis + (10);
             timeLapse += 10;
@@ -491,10 +484,7 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
         /* Stores record every 10millisecond */
         if (currentMillis >= nextRecord)
         {
-            data[iterations].timeIterations = timeLapse;
-            data[iterations].frequency = blinkFrequency;
-            data[iterations].dutyCycle = blinkBrightness;
-            data[iterations].state = digitalRead(color);
+            storeDataIntoMemory(data,&dataStruct,timeLapse,iterations);
             iterations++;
             nextRecord = currentMillis + (10);
             timeLapse += 10;
@@ -514,8 +504,11 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
     free(data);
 }
 
-void storeDataIntoMemory(){
-
+void storeDataIntoMemory(struct CSV *data,struct ledData *LEDdata,int timeLapse,int iterations){
+    data[iterations].timeIterations = timeLapse;
+    data[iterations].frequency  = LEDdata->blinkFrequency;
+    data[iterations].dutyCycle  = LEDdata->blinkBrightness;
+    data[iterations].state  = digitalRead(LEDdata->blinkLed);
 }
 
 void updateLED(struct ledData *ledData,unsigned long currentMillis){
