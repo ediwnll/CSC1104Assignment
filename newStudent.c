@@ -394,7 +394,7 @@ int confirmLedToShine(int ledToShine){
 
 
 void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBrightness,int ledBlink){
-    /*Initi table*/
+    /*Initi object to store values*/
     static struct ledData redData, greenData;
     int oppositeColor;    
 
@@ -410,7 +410,7 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
         blink(oppositeColor, ledBlink);
     }
 
-    /*iterations*/
+    /*Initializing Variables for counting to 1minute*/
     int currentMillis = millis();
     int minuteMillis = millis() + (5 * TO_MILLIS);
     int iterations = 0;
@@ -437,13 +437,14 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
         }
     }
     while(currentMillis < minuteMillis);
-
+    /*To clear any remaining stuff and write Data into CSV*/
     softPwmWrite(GREEN,0);
     softPwmWrite(RED,0);
     writeDataIntoCSV(redDataArr,greenDataArr,iterations,blinkLed);
     free(greenDataArr);
     free(redDataArr);
-
+    redData.blinkLed = 0;
+    greenData.blinkLed = 0;
 }
 /*
 This helps to create an function for the user to store data into the csv
@@ -468,7 +469,7 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
     unsigned long currentMillis = millis();
     unsigned long previousMillis = 0;
     unsigned long nextRecord = currentMillis;
-    unsigned long testData = currentMillis + (5 * TO_MILLIS);
+    unsigned long testData = currentMillis + (60 * TO_MILLIS);
     int onOffTime = period * blinkBrightness / 100;
     int iterations = 0;
     int timeLapse = 0;
@@ -586,6 +587,7 @@ void writeDataIntoCSV(struct CSV *data,struct CSV *secondData,int sizeArr, int b
         printf("New CSV file displayPlot has been created");
         fclose(CSV);
     }
+
 }
 
 /*
