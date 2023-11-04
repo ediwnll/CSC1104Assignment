@@ -58,7 +58,7 @@ VERSION_CODENAME=buster
 // Defining Millisecond
 #define TO_MILLIS 1000
 
-//Define Confirmation Status for how many led to blink
+// Define Confirmation Status for how many led to blink
 #define oneLed 45
 #define twoLed 30
 
@@ -76,9 +76,9 @@ int getBlinkLed();
 int getBlinkFrequency();
 float getBlinkBrightness();
 int confirmLedToShine();
-int confirmBlinkSelection(int, int, float,int);
+int confirmBlinkSelection(int, int, float, int);
 void recordWaveDataIntoMemory(int, int, float);
-void recordBothWaveFormIntoData(int, int, float,int);
+void recordBothWaveFormIntoData(int, int, float, int);
 void updateLED();
 void storeDataIntoMemory();
 void writeDataIntoCSV();
@@ -94,7 +94,7 @@ struct CSV
     int state;
 };
 
-struct ledData 
+struct ledData
 {
     int blinkLed;
     int blinkFrequency;
@@ -223,7 +223,7 @@ When user wants to blink LED, this function will get all the blinking configurat
 It gets from the user the LED to blink, frequency and brightness.
 Then, it will call a function to attempt handshake with Monitor before executing the blink
 */
-void blink(int color,int blinkData)
+void blink(int color, int blinkData)
 {
     system("clear");
     printf("\nBlink...\n");
@@ -233,17 +233,20 @@ void blink(int color,int blinkData)
     float brightness = getBlinkBrightness();
     int ledToShine = confirmLedToShine(blinkData);
 
-    if (confirmBlinkSelection(blinkLed, frequency, brightness,ledToShine) == CONFIRM)
+    if (confirmBlinkSelection(blinkLed, frequency, brightness, ledToShine) == CONFIRM)
     {
-        if(ledToShine == oneLed){
+        if (ledToShine == oneLed)
+        {
             recordWaveDataIntoMemory(blinkLed, frequency, brightness);
-       } else { 
-            recordBothWaveFormIntoData(blinkLed,frequency,brightness,ledToShine);
+        }
+        else
+        {
+            recordBothWaveFormIntoData(blinkLed, frequency, brightness, ledToShine);
         }
     }
     else
         system("clear");
-        return;
+    return;
 }
 
 /*
@@ -251,7 +254,8 @@ Menu to get user selction on LED to blink
 */
 int getBlinkLed(int color)
 {
-    if (color == RED || color == GREEN){
+    if (color == RED || color == GREEN)
+    {
         return color;
     }
 
@@ -289,18 +293,28 @@ int getBlinkFrequency()
     printf("Enter whole numbers between 0 to 10\n");
     printf("\nFrequency (Hz): ");
 
-    scanf("%d", &selection);
-
-    if (selection < 0 || selection > 10)
+    if (scanf("%d", &selection) == 1)
     {
-        system("clear");
-        printf("Invalid Input. Try Again...\n\n");
-        getBlinkFrequency();
+        if (selection >= 0 && selection <= 10)
+        {
+            system("clear");
+            return selection;
+        }
+        else
+        {
+            system("clear");
+            printf("Invalid Input. Try again...\n\n");
+            getBlinkFrequency();
+        }
     }
     else
     {
         system("clear");
-        return selection;
+        printf("Invalid Input. Try Again...\n\n");
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF)
+            ;
+        getBlinkFrequency();
     }
 }
 
@@ -334,7 +348,7 @@ float getBlinkBrightness()
 /*
 Menu for user to acknowledge the blink configurations input
 */
-int confirmBlinkSelection(int blinkLed, int blinkFrequency, float blinkBrightness,int ledToShine)
+int confirmBlinkSelection(int blinkLed, int blinkFrequency, float blinkBrightness, int ledToShine)
 {
 
     int selection;
@@ -360,19 +374,20 @@ int confirmBlinkSelection(int blinkLed, int blinkFrequency, float blinkBrightnes
     {
         system("clear");
         printf("Invalid Input. Try Again...\n\n");
-        confirmBlinkSelection(blinkLed, blinkFrequency, blinkBrightness,ledToShine);
+        confirmBlinkSelection(blinkLed, blinkFrequency, blinkBrightness, ledToShine);
     }
 
     return selection;
 }
 
+int confirmLedToShine(int ledToShine)
+{
 
-int confirmLedToShine(int ledToShine){
-
-    if (ledToShine == oneLed || ledToShine == twoLed){
+    if (ledToShine == oneLed || ledToShine == twoLed)
+    {
         return ledToShine == oneLed ? oneLed : twoLed;
     }
-    
+
     int selection;
 
     printf("Choose your blink choice.\n\n");
@@ -381,9 +396,10 @@ int confirmLedToShine(int ledToShine){
     printf("[2] Blink both LEDs\n");
     printf("\nYour Selection: ");
 
-    scanf("%d",&selection);
- 
-    if (selection < 1 || selection > 2){
+    scanf("%d", &selection);
+
+    if (selection < 1 || selection > 2)
+    {
         system("clear");
         printf("Invalid Input. Try Again...\n\n");
         confirmLedToShine(0);
@@ -392,21 +408,25 @@ int confirmLedToShine(int ledToShine){
     return selection == 1 ? oneLed : twoLed;
 }
 
-
-void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBrightness,int ledBlink){
+void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBrightness, int ledBlink)
+{
     /*Initi object to store values*/
     static struct ledData redData, greenData;
-    int oppositeColor;    
+    int oppositeColor;
     /* To check whether both values are stored inside to do while loop*/
-    if (blinkLed == BLINK_GREEN || blinkLed == GREEN){
-        greenData = (struct ledData) {GREEN, blinkFrequency, blinkBrightness,LOW,0};
+    if (blinkLed == BLINK_GREEN || blinkLed == GREEN)
+    {
+        greenData = (struct ledData){GREEN, blinkFrequency, blinkBrightness, LOW, 0};
         oppositeColor = RED;
-    } else{
-        redData = (struct ledData) {RED, blinkFrequency, blinkBrightness,LOW,0};
+    }
+    else
+    {
+        redData = (struct ledData){RED, blinkFrequency, blinkBrightness, LOW, 0};
         oppositeColor = GREEN;
     }
-    
-    if (redData.blinkLed != RED || greenData.blinkLed != GREEN) {
+
+    if (redData.blinkLed != RED || greenData.blinkLed != GREEN)
+    {
         blink(oppositeColor, ledBlink);
     }
 
@@ -419,28 +439,30 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
     struct CSV *greenDataArr = malloc(6000 * sizeof(struct CSV));
     int timeLapse = 0;
     /*Make LED blink based on duty cycle and record wave form data into CSV*/
-    do {
+    do
+    {
         currentMillis = millis();
-        updateLED(&redData,currentMillis);
-        updateLED(&greenData,currentMillis);
+        updateLED(&redData, currentMillis);
+        updateLED(&greenData, currentMillis);
         /* Write data into array based on 10ms period*/
-        if (currentMillis >= nextRecord){
-            storeDataIntoMemory(redDataArr,&redData,timeLapse,iterations);
-            storeDataIntoMemory(greenDataArr,&greenData,timeLapse,iterations);
+        if (currentMillis >= nextRecord)
+        {
+            storeDataIntoMemory(redDataArr, &redData, timeLapse, iterations);
+            storeDataIntoMemory(greenDataArr, &greenData, timeLapse, iterations);
             iterations++;
             nextRecord = currentMillis + (10);
             timeLapse += 10;
             /* Once it reaches 6000 break the while stateemnt*/
-            if (iterations == 6000){
+            if (iterations == 6000)
+            {
                 break;
             }
         }
-    }
-    while(currentMillis < minuteMillis);
+    } while (currentMillis < minuteMillis);
     /*To free up memory spaces for the structure arrays and write data information into LED*/
-    softPwmWrite(GREEN,0);
-    softPwmWrite(RED,0);
-    writeDataIntoCSV(redDataArr,greenDataArr,iterations,blinkLed);
+    softPwmWrite(GREEN, 0);
+    softPwmWrite(RED, 0);
+    writeDataIntoCSV(redDataArr, greenDataArr, iterations, blinkLed);
     free(greenDataArr);
     free(redDataArr);
     /* Reset the static array to store empty values if the users want to try other LED duty cycle for both LED*/
@@ -456,7 +478,7 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
     /* Formulas and initializer*/
     int period = (1.0f / blinkFrequency) * TO_MILLIS;
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
-    struct ledData dataStruct = (struct ledData) {color, blinkFrequency, blinkBrightness,LOW,0};
+    struct ledData dataStruct = (struct ledData){color, blinkFrequency, blinkBrightness, LOW, 0};
     struct CSV *data;
     data = malloc(6000 * sizeof(struct CSV));
 
@@ -474,19 +496,18 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
     int onOffTime = period * blinkBrightness / 100;
     int iterations = 0;
     int timeLapse = 0;
-    int brightness = 0; 
+    int brightness = 0;
 
     do
     {
         currentMillis = millis();
 
-        updateLED(&dataStruct,currentMillis);
-
+        updateLED(&dataStruct, currentMillis);
 
         /* Stores record every 10millisecond */
         if (currentMillis >= nextRecord)
         {
-            storeDataIntoMemory(data,&dataStruct,timeLapse,iterations);
+            storeDataIntoMemory(data, &dataStruct, timeLapse, iterations);
             iterations++;
             nextRecord = currentMillis + (10);
             timeLapse += 10;
@@ -502,24 +523,27 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
 
     /*ensures that the current color will be off after looping and write data into csv and make sure the memory allocation is freed after use*/
     softPwmWrite(color, 0);
-    writeDataIntoCSV(data,NULL, iterations, blinkLed);
+    writeDataIntoCSV(data, NULL, iterations, blinkLed);
     free(data);
 }
 
-void storeDataIntoMemory(struct CSV *data,struct ledData *LEDdata,int timeLapse,int iterations){
+void storeDataIntoMemory(struct CSV *data, struct ledData *LEDdata, int timeLapse, int iterations)
+{
     /*This will store data based on each iterations of the array*/
     data[iterations].timeIterations = timeLapse;
-    data[iterations].frequency  = LEDdata->blinkFrequency;
-    data[iterations].dutyCycle  = LEDdata->blinkBrightness;
-    data[iterations].state  = digitalRead(LEDdata->blinkLed);
+    data[iterations].frequency = LEDdata->blinkFrequency;
+    data[iterations].dutyCycle = LEDdata->blinkBrightness;
+    data[iterations].state = digitalRead(LEDdata->blinkLed);
 }
 
-void updateLED(struct ledData *ledData,unsigned long currentMillis){
+void updateLED(struct ledData *ledData, unsigned long currentMillis)
+{
     /*Based on the duty Cycle the LED will blink accordingly and set the values in*/
     int period = (1.0f / ledData->blinkFrequency) * TO_MILLIS;
-    int onOffTime = ledData->ledState == HIGH ? period * (ledData->blinkBrightness/100) : period * (1-(ledData->blinkBrightness/100));
+    int onOffTime = ledData->ledState == HIGH ? period * (ledData->blinkBrightness / 100) : period * (1 - (ledData->blinkBrightness / 100));
 
-    if(currentMillis - ledData->previousMillis >= onOffTime){
+    if (currentMillis - ledData->previousMillis >= onOffTime)
+    {
         ledData->ledState = ledData->ledState == LOW ? HIGH : LOW;
         ledData->previousMillis = currentMillis;
     }
@@ -529,25 +553,40 @@ void updateLED(struct ledData *ledData,unsigned long currentMillis){
     digitalWrite(ledData->blinkLed, ledData->ledState);
 }
 
-
 /*
 This function creates the CSV file and writes into it.
 */
-void writeDataIntoCSV(struct CSV *data,struct CSV *secondData,int sizeArr, int blinkLed)
+void writeDataIntoCSV(struct CSV *data, struct CSV *secondData, int sizeArr, int blinkLed)
 {
     /* Init array to store data inside*/
     static struct CSV redLedArray[6000];
     static struct CSV greenLedArray[6000];
     int oppositeColor;
     /*Checks which function did it prompt from and set accordingly to the data set*/
-    if (data == NULL || secondData == NULL){
-
-    if (blinkLed == BLINK_GREEN)
+    if (data == NULL || secondData == NULL)
     {
-        for (int i = 0; i < sizeArr; i++)
+
+        if (blinkLed == BLINK_GREEN)
         {
-            greenLedArray[i] = data[i];
-            oppositeColor = RED;
+            for (int i = 0; i < sizeArr; i++)
+            {
+                greenLedArray[i] = data[i];
+                oppositeColor = RED;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < sizeArr; i++)
+            {
+                redLedArray[i] = data[i];
+                oppositeColor = GREEN;
+            }
+        }
+
+        /* This will trigger the user to key in the value if one of the array doesnt contain value accordingly*/
+        if (greenLedArray[0].frequency == 0 || redLedArray[0].frequency == 0)
+        {
+            blink(oppositeColor, oneLed);
         }
     }
     else
@@ -555,25 +594,12 @@ void writeDataIntoCSV(struct CSV *data,struct CSV *secondData,int sizeArr, int b
         for (int i = 0; i < sizeArr; i++)
         {
             redLedArray[i] = data[i];
-            oppositeColor = GREEN;
-        }
-    }
-
-    /* This will trigger the user to key in the value if one of the array doesnt contain value accordingly*/
-    if (greenLedArray[0].frequency == 0 || redLedArray[0].frequency == 0)
-    {
-        blink(oppositeColor,oneLed);
-    }
-
-
-    } else {
-        for(int i=0; i<sizeArr;i++){
-            redLedArray[i] = data[i];
             greenLedArray[i] = secondData[i];
         }
     }
     /*Checks whether file is empty based on data integerity*/
-    if(checkFileExist("displayPlot.csv") == 0){
+    if (checkFileExist("displayPlot.csv") == 0)
+    {
         /*Creating a new csv to store the data in and header*/
         FILE *CSV = fopen("displayPlot.csv", "wb+");
         fprintf(CSV, "Green Iterations,Green Frequency,Green Duty Cycle,Green State,Red Iterations,Red Frequency, Red Duty Cycle,Red State"); // Creating Header for the file
@@ -590,7 +616,6 @@ void writeDataIntoCSV(struct CSV *data,struct CSV *secondData,int sizeArr, int b
         printf("New CSV file displayPlot has been created");
         fclose(CSV);
     }
-
 }
 
 /*
