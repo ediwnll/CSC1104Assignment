@@ -397,7 +397,7 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
     /*Initi object to store values*/
     static struct ledData redData, greenData;
     int oppositeColor;    
-
+    /* To check whether both values are stored inside to do while loop*/
     if (blinkLed == BLINK_GREEN || blinkLed == GREEN){
         greenData = (struct ledData) {GREEN, blinkFrequency, blinkBrightness,LOW,0};
         oppositeColor = RED;
@@ -410,7 +410,7 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
         blink(oppositeColor, ledBlink);
     }
 
-    /*Initializing Variables for counting to 1minute*/
+    /*Initializing Variables to do while loop for 1 minute*/
     int currentMillis = millis();
     int minuteMillis = millis() + (5 * TO_MILLIS);
     int iterations = 0;
@@ -418,31 +418,32 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
     struct CSV *redDataArr = malloc(6000 * sizeof(struct CSV));
     struct CSV *greenDataArr = malloc(6000 * sizeof(struct CSV));
     int timeLapse = 0;
-
+    /*Make LED blink based on duty cycle and record wave form data into CSV*/
     do {
         currentMillis = millis();
         updateLED(&redData,currentMillis);
         updateLED(&greenData,currentMillis);
-        /* Think of way to write in the format of green and red data set accordingly*/
+        /* Write data into array based on 10ms period*/
         if (currentMillis >= nextRecord){
             storeDataIntoMemory(redDataArr,&redData,timeLapse,iterations);
             storeDataIntoMemory(greenDataArr,&greenData,timeLapse,iterations);
             iterations++;
             nextRecord = currentMillis + (10);
             timeLapse += 10;
-
+            /* Once it reaches 6000 break the while stateemnt*/
             if (iterations == 6000){
                 break;
             }
         }
     }
     while(currentMillis < minuteMillis);
-    /*To clear any remaining stuff and write Data into CSV*/
+    /*To free up memory spaces for the structure arrays and write data information into LED*/
     softPwmWrite(GREEN,0);
     softPwmWrite(RED,0);
     writeDataIntoCSV(redDataArr,greenDataArr,iterations,blinkLed);
     free(greenDataArr);
     free(redDataArr);
+    /* Reset the static array to store empty values if the users want to try other LED duty cycle for both LED*/
     redData.blinkLed = 0;
     greenData.blinkLed = 0;
 }
@@ -506,6 +507,7 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
 }
 
 void storeDataIntoMemory(struct CSV *data,struct ledData *LEDdata,int timeLapse,int iterations){
+    /*This will store data based on each iterations of the array*/
     data[iterations].timeIterations = timeLapse;
     data[iterations].frequency  = LEDdata->blinkFrequency;
     data[iterations].dutyCycle  = LEDdata->blinkBrightness;
@@ -513,6 +515,7 @@ void storeDataIntoMemory(struct CSV *data,struct ledData *LEDdata,int timeLapse,
 }
 
 void updateLED(struct ledData *ledData,unsigned long currentMillis){
+    /*Based on the duty Cycle the LED will blink accordingly and set the values in*/
     int period = (1.0f / ledData->blinkFrequency) * TO_MILLIS;
     int onOffTime = ledData->ledState == HIGH ? period * (ledData->blinkBrightness/100) : period * (1-(ledData->blinkBrightness/100));
 
@@ -536,7 +539,7 @@ void writeDataIntoCSV(struct CSV *data,struct CSV *secondData,int sizeArr, int b
     static struct CSV redLedArray[6000];
     static struct CSV greenLedArray[6000];
     int oppositeColor;
-
+    /*Checks which function did it prompt from and set accordingly to the data set*/
     if (data == NULL || secondData == NULL){
 
     if (blinkLed == BLINK_GREEN)
@@ -569,7 +572,7 @@ void writeDataIntoCSV(struct CSV *data,struct CSV *secondData,int sizeArr, int b
             greenLedArray[i] = secondData[i];
         }
     }
-
+    /*Checks whether file is empty based on data integerity*/
     if(checkFileExist("displayPlot.csv") == 0){
         /*Creating a new csv to store the data in and header*/
         FILE *CSV = fopen("displayPlot.csv", "wb+");
