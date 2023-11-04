@@ -622,6 +622,8 @@ void writeDataIntoCSV(struct CSV *data, struct CSV *secondData, int sizeArr, int
         printf("New CSV file displayPlot has been created");
         fclose(CSV);
     }
+    memset(redLedArray,0,sizeArr);
+    memset(greenLedArray,0,sizeArr);
 }
 
 /*
