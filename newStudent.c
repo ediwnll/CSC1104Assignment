@@ -330,18 +330,16 @@ float getBlinkBrightness()
     printf("Enter any numbers between 0 to 100\n");
     printf("Brightness (%%): ");
 
-    scanf("%f", &selection);
-
-    if (selection < 0 || selection > 100)
+    if (scanf("%f", &selection) == 1 && selection >= 0 && selection <= 100)
     {
         system("clear");
-        printf("Invalid Input. Try Again...\n\n");
-        getBlinkBrightness();
+        return selection;
     }
     else
     {
         system("clear");
-        return selection;
+        printf("Invalid Input. Try Again...\n\n");
+        return getBlinkBrightness();
     }
 }
 
@@ -396,16 +394,24 @@ int confirmLedToShine(int ledToShine)
     printf("[2] Blink both LEDs\n");
     printf("\nYour Selection: ");
 
-    scanf("%d", &selection);
-
-    if (selection < 1 || selection > 2)
+    if (scanf("%d", &selection) == 1)
     {
-        system("clear");
-        printf("Invalid Input. Try Again...\n\n");
-        confirmLedToShine(0);
+        if (selection == 1 || selection == 2)
+        {
+            system("clear");
+            return (selection == 1) ? oneLed : twoLed;
+        }
     }
+
     system("clear");
-    return selection == 1 ? oneLed : twoLed;
+    printf("Invalid Input. Try Again...\n\n");
+
+    // Clear the input buffer
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+
+    return confirmLedToShine(0);
 }
 
 void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBrightness, int ledBlink)
