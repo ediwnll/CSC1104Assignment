@@ -488,7 +488,6 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
 {
     printf("\nBlinking...\n");
     /* Formulas and initializer*/
-    int period = (1.0f / blinkFrequency) * TO_MILLIS;
     int color = blinkLed == BLINK_GREEN ? GREEN : RED;
     struct ledData dataStruct = (struct ledData){color, blinkFrequency, blinkBrightness, LOW, 0};
     struct CSV *data;
@@ -502,13 +501,10 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
 
     /* Intializes the Millisecond counter to compare insert data into memory*/
     unsigned long currentMillis = millis();
-    unsigned long previousMillis = 0;
     unsigned long nextRecord = currentMillis;
     unsigned long testData = currentMillis + (60 * TO_MILLIS);
-    int onOffTime = period * blinkBrightness / 100;
     int iterations = 0;
     int timeLapse = 0;
-    int brightness = 0;
 
     do
     {
