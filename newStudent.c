@@ -442,8 +442,7 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
     /*Initializing Variables to do while loop for 1 minute*/
     unsigned long currentMillis = millis();
     unsigned long nextRecord = currentMillis;
-    unsigned long minuteMillis = currentMillis + 60 * TO_MILLIS;
-    printf("currentMillis = %d vs minuteMillis = %d\n", currentMillis, minuteMillis);
+    unsigned long minuteMillis = currentMillis + (60 * TO_MILLIS);
     int iterations = 0;
     int timeLapse = 0;
 
@@ -481,7 +480,7 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
     /*To free up memory spaces for the structure arrays and write data information into LED*/
     softPwmWrite(GREEN, 0);
     softPwmWrite(RED, 0);
-    //writeDataIntoCSV(redDataArr, greenDataArr, iterations, blinkLed);
+    writeDataIntoCSV(redDataArr, greenDataArr, iterations, blinkLed);
     free(greenDataArr);
     free(redDataArr);
     /* Reset the static array to store empty values if the users want to try other LED duty cycle for both LED*/
