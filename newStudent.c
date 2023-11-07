@@ -239,7 +239,7 @@ void blink(int color, int blinkData)
         {
             recordWaveDataIntoMemory(blinkLed, frequency, brightness);
         }
-        else
+        else 
         {
             recordBothWaveFormIntoData(blinkLed, frequency, brightness, ledToShine);
         }
@@ -435,13 +435,15 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
 
     if (redData.blinkLed != RED || greenData.blinkLed != GREEN)
     {
-        blink(oppositeColor, ledBlink);
+      blink(oppositeColor, ledBlink);
+      return;
     }
 
     /*Initializing Variables to do while loop for 1 minute*/
     unsigned long currentMillis = millis();
     unsigned long nextRecord = currentMillis;
-    unsigned long minuteMillis = (60 * TO_MILLIS);
+    unsigned long minuteMillis = currentMillis + 60 * TO_MILLIS;
+    printf("currentMillis = %d vs minuteMillis = %d\n", currentMillis, minuteMillis);
     int iterations = 0;
     int timeLapse = 0;
 
@@ -479,7 +481,7 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
     /*To free up memory spaces for the structure arrays and write data information into LED*/
     softPwmWrite(GREEN, 0);
     softPwmWrite(RED, 0);
-    writeDataIntoCSV(redDataArr, greenDataArr, iterations, blinkLed);
+    //writeDataIntoCSV(redDataArr, greenDataArr, iterations, blinkLed);
     free(greenDataArr);
     free(redDataArr);
     /* Reset the static array to store empty values if the users want to try other LED duty cycle for both LED*/
