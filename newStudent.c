@@ -417,6 +417,8 @@ int confirmLedToShine(int ledToShine)
 void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBrightness, int ledBlink)
 {
     /*Initi object to store values*/
+    printf("\nBlinking.....\n");
+
     static struct ledData redData, greenData;
     int oppositeColor;
     /* To check whether both values are stored inside to do while loop*/
@@ -437,13 +439,14 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
     }
 
     /*Initializing Variables to do while loop for 1 minute*/
-    int currentMillis = millis();
-    int minuteMillis = millis() + (60 * TO_MILLIS);
+    unsigned long currentMillis = millis();
+    unsigned long nextRecord = currentMillis;
+    unsigned long minuteMillis = (60 * TO_MILLIS);
     int iterations = 0;
-    int nextRecord = currentMillis;
+    int timeLapse = 0;
+
     struct CSV *redDataArr = malloc(6000 * sizeof(struct CSV));
     struct CSV *greenDataArr = malloc(6000 * sizeof(struct CSV));
-    int timeLapse = 0;
 
     if(redDataArr == NULL || greenDataArr == NULL){
         fprintf(stderr, "Memory allocation failed");
@@ -464,12 +467,14 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
             iterations++;
             nextRecord = currentMillis + (10);
             timeLapse += 10;
-            /* Once it reaches 6000 break the while stateemnt*/
-            if (iterations == 6000)
-            {
-                break;
-            }
+            
         }
+        /* Once it reaches 6000 break the while stateemnt*/
+        if (iterations >= 6000)
+        {
+            break;
+        }
+
     } while (currentMillis < minuteMillis);
     /*To free up memory spaces for the structure arrays and write data information into LED*/
     softPwmWrite(GREEN, 0);
@@ -502,7 +507,7 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
     /* Intializes the Millisecond counter to compare insert data into memory*/
     unsigned long currentMillis = millis();
     unsigned long nextRecord = currentMillis;
-    unsigned long testData = currentMillis + (60 * TO_MILLIS);
+    unsigned long testData = (60 * TO_MILLIS);
     int iterations = 0;
     int timeLapse = 0;
 
@@ -624,9 +629,8 @@ void writeDataIntoCSV(struct CSV *data, struct CSV *secondData, int sizeArr, int
         printf("New CSV file displayPlot has been created");
         fclose(CSV);
     }
-
-    greenLedArray[0].frequency = 0;
-    redLedArray[0].frequency = 0;
+    memset(redLedArray,0,sizeArr);
+    memset(greenLedArray,0,sizeArr);
 }
 
 /*
