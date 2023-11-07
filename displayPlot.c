@@ -12,7 +12,7 @@ and displays the data in graphs using GNUplot
 
 // DEFINITIONS
 #define LINE_LENGTH 256 // Assume maximum line length of 256
-#define MAX_ROWS 300    // Maximum number of rows
+#define MAX_ROWS 3000    // Maximum number of rows
 #define MAX_COLUMNS 8   // Number of columns in CSV file
 #define MIDDLE_COL 4    // variable to split the data into green and red LED data arrays
 

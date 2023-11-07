@@ -438,7 +438,7 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
 
     /*Initializing Variables to do while loop for 1 minute*/
     int currentMillis = millis();
-    int minuteMillis = millis() + (5 * TO_MILLIS);
+    int minuteMillis = millis() + (60 * TO_MILLIS);
     int iterations = 0;
     int nextRecord = currentMillis;
     struct CSV *redDataArr = malloc(6000 * sizeof(struct CSV));
@@ -546,7 +546,7 @@ void updateLED(struct ledData *ledData, unsigned long currentMillis)
 {
     /*Based on the duty Cycle the LED will blink accordingly and set the values in*/
     int period = (1.0f / ledData->blinkFrequency) * TO_MILLIS;
-    int onOffTime = ledData->ledState == HIGH ? period * (ledData->blinkBrightness / 100) : period * (1 - (ledData->blinkBrightness / 100));
+    int onOffTime = ledData->ledState == HIGH || ledData->blinkBrightness == 100 ? period * (ledData->blinkBrightness / 100) : period * (1 - (ledData->blinkBrightness / 100));
 
     if (currentMillis - ledData->previousMillis >= onOffTime)
     {
@@ -622,8 +622,9 @@ void writeDataIntoCSV(struct CSV *data, struct CSV *secondData, int sizeArr, int
         printf("New CSV file displayPlot has been created");
         fclose(CSV);
     }
-    memset(redLedArray,0,sizeArr);
-    memset(greenLedArray,0,sizeArr);
+
+    greenLedArray[0].frequency = 0;
+    redLedArray[0].frequency = 0;
 }
 
 /*
