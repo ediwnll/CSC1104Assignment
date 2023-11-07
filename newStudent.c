@@ -507,7 +507,7 @@ void recordWaveDataIntoMemory(int blinkLed, int blinkFrequency, float blinkBrigh
     /* Intializes the Millisecond counter to compare insert data into memory*/
     unsigned long currentMillis = millis();
     unsigned long nextRecord = currentMillis;
-    unsigned long testData = (60 * TO_MILLIS);
+    unsigned long testData = currentMillis + (60 * TO_MILLIS);
     int iterations = 0;
     int timeLapse = 0;
 
