@@ -444,6 +444,12 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
     struct CSV *redDataArr = malloc(6000 * sizeof(struct CSV));
     struct CSV *greenDataArr = malloc(6000 * sizeof(struct CSV));
     int timeLapse = 0;
+
+    if(redDataArr == NULL || greenDataArr == NULL){
+        fprintf(stderr, "Memory allocation failed");
+        return;
+    }
+
     /*Make LED blink based on duty cycle and record wave form data into CSV*/
     do
     {
