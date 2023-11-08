@@ -601,6 +601,7 @@ void writeDataIntoCSV(struct CSV *data, struct CSV *secondData, int sizeArr, int
         if (greenLedArray[0].frequency == 0 || redLedArray[0].frequency == 0)
         {
             blink(oppositeColor, oneLed);
+            return;
         }
     }
     else
