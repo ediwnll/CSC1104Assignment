@@ -2,7 +2,8 @@
 === HOW TO RUN ===
 Step 1: cd into C file location
 Step 2: gcc -o newStudent newStudent.c -lwiringPi
-Step 3: ./student
+Step 3: rm -rf displayPlot.csv
+Step 3: ./newStudent
 
 === PRE-REQUISITES ===
 Install wiringPi: https://learn.sparkfun.com/tutorials/raspberry-gpio/c-wiringpi-setup
@@ -13,12 +14,8 @@ Check wiringPi version: gpio -v
 Check GPIO status: gpio readall
 
 === GPIO PIN CONNECTION ===
-27 GREEN LED
-13 RED LED
-GROUND
-
-GPIO14 to Monitor GPIO15
-GPIO15 to Monitor GPIO14
+GPIO27 RED LED
+GPIO13 RED LED
 GROUND
 
 === RASPBERRY PI VERSION ===
@@ -239,7 +236,7 @@ void blink(int color, int blinkData)
         {
             recordWaveDataIntoMemory(blinkLed, frequency, brightness);
         }
-        else 
+        else
         {
             recordBothWaveFormIntoData(blinkLed, frequency, brightness, ledToShine);
         }
@@ -435,8 +432,8 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
 
     if (redData.blinkLed != RED || greenData.blinkLed != GREEN)
     {
-      blink(oppositeColor, ledBlink);
-      return;
+        blink(oppositeColor, ledBlink);
+        return;
     }
 
     /*Initializing Variables to do while loop for 1 minute*/
@@ -449,7 +446,8 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
     struct CSV *redDataArr = malloc(6000 * sizeof(struct CSV));
     struct CSV *greenDataArr = malloc(6000 * sizeof(struct CSV));
 
-    if(redDataArr == NULL || greenDataArr == NULL){
+    if (redDataArr == NULL || greenDataArr == NULL)
+    {
         fprintf(stderr, "Memory allocation failed");
         return;
     }
@@ -468,7 +466,6 @@ void recordBothWaveFormIntoData(int blinkLed, int blinkFrequency, float blinkBri
             iterations++;
             nextRecord = currentMillis + (10);
             timeLapse += 10;
-            
         }
         /* Once it reaches 6000 break the while stateemnt*/
         if (iterations >= 6000)
@@ -631,8 +628,8 @@ void writeDataIntoCSV(struct CSV *data, struct CSV *secondData, int sizeArr, int
         printf("New CSV file displayPlot has been created");
         fclose(CSV);
     }
-    memset(redLedArray,0,sizeArr);
-    memset(greenLedArray,0,sizeArr);
+    memset(redLedArray, 0, sizeArr);
+    memset(greenLedArray, 0, sizeArr);
 }
 
 /*

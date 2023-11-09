@@ -3,6 +3,15 @@ displayPlot.c
 
 This program reads in the generated LED waveform data from the Raspberry Pi
 and displays the data in graphs using GNUplot
+
+=== HOW TO RUN ===
+Step 1: cd into C file location
+Step 2: scp -P 22  piusername@ipaddress:displayPlot.csv .
+Step 3: gcc -o displayPlot displayPlot.c
+Step 4: ./displayPlot
+
+=== PRE-REQUISITES ===
+Install gnuPlot: https://riptutorial.com/gnuplot/example/11275/installation-or-setup
 */
 
 // header files
@@ -111,7 +120,8 @@ void gnuPlot(char greenData[MAX_ROWS][MIDDLE_COL][LINE_LENGTH], char redData[MAX
     }
 
     // set terminal to output file to store waveform plots
-    fprintf(gnuplotPipe, "set terminal png; set output \'waveform.png\'\n");
+    // UNCOMMENT THE LINE BELOW IF YOU WANT TO STORE WAVEFORM PLOT
+    // fprintf(gnuplotPipe, "set terminal png; set output \'waveform.png\'\n");
 
     // send commands for first plot
     fprintf(gnuplotPipe, "set multiplot layout 2, 1\n");                                                                               // create a multiplot
@@ -134,9 +144,6 @@ void gnuPlot(char greenData[MAX_ROWS][MIDDLE_COL][LINE_LENGTH], char redData[MAX
     fprintf(gnuplotPipe, "e\n"); // to end data input
     // End of first plot
 
-    // set terminal back to interactive mode
-    fprintf(gnuplotPipe, "set terminal qt; set output\n");
-
     // send commands for second plot
     fprintf(gnuplotPipe, "set title 'Blink Red LED at %.0f Hz, %.0f%% duty cycle'\n", redDataDouble[0][1], redDataDouble[0][2]); // set the title of the second graph
     fprintf(gnuplotPipe, "set border 3\n");                                                                                      // remove the top border of the graph
@@ -153,12 +160,6 @@ void gnuPlot(char greenData[MAX_ROWS][MIDDLE_COL][LINE_LENGTH], char redData[MAX
     }
     fprintf(gnuplotPipe, "e\n"); // to end data input
     // End of the second plot
-
-    // switch back to PNG for the final output
-    fprintf(gnuplotPipe, "set terminal png; set output \'waveform.png\'\n");
-
-    // reset multiplot to exit multiplot mode
-    fprintf(gnuplotPipe, "unset multiplot\n");
 
     // close the pipe
     fclose(gnuplotPipe);
