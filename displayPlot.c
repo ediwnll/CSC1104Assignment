@@ -12,7 +12,7 @@ and displays the data in graphs using GNUplot
 
 // DEFINITIONS
 #define LINE_LENGTH 256 // Assume maximum line length of 256
-#define MAX_ROWS 300   // Maximum number of rows
+#define MAX_ROWS 300    // Maximum number of rows
 #define MAX_COLUMNS 8   // Number of columns in CSV file
 #define MIDDLE_COL 4    // variable to split the data into green and red LED data arrays
 
@@ -110,6 +110,9 @@ void gnuPlot(char greenData[MAX_ROWS][MIDDLE_COL][LINE_LENGTH], char redData[MAX
         perror("Cannot open gnuplot pipe"); // print out gnuplot pipe cannot be open. Check if you installed gnuplot
     }
 
+    // set terminal to output file to store waveform plots
+    fprintf(gnuplotPipe, "set terminal png; set output \'waveform.png\'\n");
+
     // send commands for first plot
     fprintf(gnuplotPipe, "set multiplot layout 2, 1\n");                                                                               // create a multiplot
     fprintf(gnuplotPipe, "unset key\n");                                                                                               // undo the unset key
@@ -131,6 +134,9 @@ void gnuPlot(char greenData[MAX_ROWS][MIDDLE_COL][LINE_LENGTH], char redData[MAX
     fprintf(gnuplotPipe, "e\n"); // to end data input
     // End of first plot
 
+    // set terminal back to interactive mode
+    fprintf(gnuplotPipe, "set terminal qt; set output\n");
+
     // send commands for second plot
     fprintf(gnuplotPipe, "set title 'Blink Red LED at %.0f Hz, %.0f%% duty cycle'\n", redDataDouble[0][1], redDataDouble[0][2]); // set the title of the second graph
     fprintf(gnuplotPipe, "set border 3\n");                                                                                      // remove the top border of the graph
@@ -147,6 +153,13 @@ void gnuPlot(char greenData[MAX_ROWS][MIDDLE_COL][LINE_LENGTH], char redData[MAX
     }
     fprintf(gnuplotPipe, "e\n"); // to end data input
     // End of the second plot
+
+    // switch back to PNG for the final output
+    fprintf(gnuplotPipe, "set terminal png; set output \'waveform.png\'\n");
+
+    // reset multiplot to exit multiplot mode
+    fprintf(gnuplotPipe, "unset multiplot\n");
+
     // close the pipe
     fclose(gnuplotPipe);
 }
